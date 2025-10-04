@@ -2,29 +2,22 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const redis = require('redis');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Redis client configuration
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  retry_strategy: (options) => {
-    if (options.error && options.error.code === 'ECONNREFUSED') {
-      console.log('Redis server connection refused, running without cache');
-      return undefined; // Don't retry
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  socket: {
+    reconnectStrategy: (retries) => {
+      if (retries > 10) {
+        console.log('Redis max retry attempts reached, running without cache');
+        return false; // Stop retrying
+      }
+      return Math.min(retries * 100, 3000);
     }
-    if (options.total_retry_time > 1000 * 60 * 60) {
-      console.log('Redis retry time exhausted, running without cache');
-      return undefined;
-    }
-    if (options.attempt > 10) {
-      console.log('Redis max retry attempts reached, running without cache');
-      return undefined;
-    }
-    return Math.min(options.attempt * 100, 3000);
   }
 });
 
