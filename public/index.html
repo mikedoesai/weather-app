@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rain Check - Weather App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                <i class="fas fa-cloud-rain mr-4"></i>
+                Rain Check
+            </h1>
+            <p class="text-xl text-white opacity-90">Find out if it's raining in your area</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Weather Display Area -->
+            <div id="weather-display" class="p-8 text-center min-h-96 flex flex-col justify-center">
+                <!-- Initial State -->
+                <div id="initial-state" class="space-y-6">
+                    <div class="text-6xl text-gray-400 mb-4">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-700">Check Your Weather</h2>
+                    <p class="text-gray-500">Get your current location to check if it's raining</p>
+                    <button id="get-location-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105">
+                        <i class="fas fa-location-arrow mr-2"></i>
+                        Get My Location
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-state" class="hidden space-y-6">
+                    <div class="text-6xl text-blue-500 mb-4">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-700">Checking Weather...</h2>
+                    <p class="text-gray-500">Getting your location and weather data</p>
+                </div>
+
+                <!-- Weather Result -->
+                <div id="weather-result" class="hidden space-y-6">
+                    <div id="weather-icon" class="text-8xl mb-4"></div>
+                    <div id="rain-status" class="text-3xl font-bold mb-2"></div>
+                    <div id="temperature" class="text-2xl text-gray-600 mb-2"></div>
+                    <div id="weather-description" class="text-lg text-gray-500 mb-4"></div>
+                    <div id="precipitation-info" class="text-sm text-gray-400 mb-6"></div>
+                    <button id="check-again-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition duration-300">
+                        <i class="fas fa-refresh mr-2"></i>
+                        Check Again
+                    </button>
+                </div>
+
+                <!-- Error State -->
+                <div id="error-state" class="hidden space-y-6">
+                    <div class="text-6xl text-red-500 mb-4">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-700">Oops!</h2>
+                    <p id="error-message" class="text-gray-500"></p>
+                    <button id="retry-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition duration-300">
+                        <i class="fas fa-redo mr-2"></i>
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profanity Toggle -->
+        <div class="max-w-md mx-auto mt-8 bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-language text-gray-600 mr-3"></i>
+                    <span class="text-gray-700 font-medium">F*ck You Forecast Mode</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="profanity-toggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+            <p class="text-gray-500 text-xs mt-2 text-center">
+                Toggle for more offensive weather descriptions
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6">
+            <p class="text-white opacity-75 text-sm">
+                Powered by <a href="https://open-meteo.com" class="underline hover:opacity-100" target="_blank">Open-Meteo</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+
