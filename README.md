@@ -83,6 +83,21 @@ git branch -M main
 git push -u origin main
 ```
 
+## 🚀 **Deploy to Vercel**
+
+Deploy your weather app to Vercel for free:
+
+### **Quick Deploy**
+1. Push your code to GitHub
+2. Go to [vercel.com](https://vercel.com)
+3. Import your GitHub repository
+4. Deploy automatically!
+
+### **Detailed Guide**
+See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for complete deployment instructions.
+
+**Live Demo**: Your app will be available at `https://your-weather-app.vercel.app`
+
 ## Development
 
 For development with auto-restart:
