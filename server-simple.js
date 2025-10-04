@@ -7,7 +7,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true, // Allow all origins for Vercel
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -18,18 +23,35 @@ app.get('/api/debug', (req, res) => {
     vercel: process.env.VERCEL,
     port: process.env.PORT,
     timestamp: new Date().toISOString(),
-    status: 'Server is running'
+    status: 'Server is running',
+    url: req.url,
+    headers: req.headers
+  });
+});
+
+// Test endpoint for debugging
+app.get('/api/test', (req, res) => {
+  res.json({
+    message: 'API is working!',
+    timestamp: new Date().toISOString(),
+    query: req.query,
+    headers: req.headers
   });
 });
 
 // Weather API endpoint (simplified for Vercel)
 app.get('/api/weather', async (req, res) => {
   try {
+    console.log('Weather API called with query:', req.query);
+    console.log('Request headers:', req.headers);
+    
     const { latitude, longitude } = req.query;
     
     if (!latitude || !longitude) {
+      console.log('Missing coordinates:', { latitude, longitude });
       return res.status(400).json({ 
-        error: 'Latitude and longitude are required' 
+        error: 'Latitude and longitude are required',
+        received: { latitude, longitude }
       });
     }
 
@@ -38,10 +60,16 @@ app.get('/api/weather', async (req, res) => {
     // Fetch from Open-Meteo API
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=precipitation&timezone=auto`;
     
+    console.log('Weather API URL:', weatherUrl);
+    
     const response = await fetch(weatherUrl);
+    console.log('Weather API response status:', response.status);
+    
     const data = await response.json();
+    console.log('Weather API response data:', data);
 
     if (!response.ok) {
+      console.error('Weather API error:', data);
       throw new Error(`Weather API error: ${data.reason || 'Unknown error'}`);
     }
 

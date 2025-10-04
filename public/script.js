@@ -97,17 +97,32 @@ class WeatherApp {
     async fetchWeatherData(latitude, longitude) {
         try {
             console.log(`Fetching weather for: ${latitude}, ${longitude}`);
-            const response = await fetch(`/api/weather?latitude=${latitude}&longitude=${longitude}`);
+            
+            // Use absolute URL for Vercel compatibility
+            const baseUrl = window.location.origin;
+            const apiUrl = `${baseUrl}/api/weather?latitude=${latitude}&longitude=${longitude}`;
+            
+            console.log('API URL:', apiUrl);
+            
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors'
+            });
             
             console.log('Response status:', response.status);
             console.log('Response headers:', response.headers);
             
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to fetch weather data'}`);
+            }
+            
             const data = await response.json();
             console.log('Weather data received:', data);
-
-            if (!response.ok) {
-                throw new Error(data.error || `HTTP ${response.status}: Failed to fetch weather data`);
-            }
 
             this.displayWeatherData(data);
         } catch (error) {
