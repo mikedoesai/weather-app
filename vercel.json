@@ -15,13 +15,5 @@
       "src": "/(.*)",
       "dest": "/server-simple.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "server-simple.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }

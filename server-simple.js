@@ -118,8 +118,8 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Only start server if not in Vercel environment
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+// Start server for local development
+if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`🌧️ Weather app server running on http://localhost:${PORT}`);
     console.log(`📊 Debug endpoint: http://localhost:${PORT}/api/debug`);
