@@ -229,6 +229,20 @@ app.get('/api/weather', async (req, res) => {
   }
 });
 
+// Debug endpoint
+app.get('/api/debug', (req, res) => {
+  res.json({
+    environment: process.env.NODE_ENV,
+    vercel: process.env.VERCEL,
+    port: process.env.PORT,
+    timestamp: new Date().toISOString(),
+    redis: {
+      connected: redisClient.isOpen,
+      status: redisClient.isOpen ? 'connected' : 'disconnected'
+    }
+  });
+});
+
 // Cache status endpoint
 app.get('/api/cache/status', async (req, res) => {
   try {
@@ -280,11 +294,17 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
-  console.log(`🌧️ Weather app server running on http://localhost:${PORT}`);
-  console.log(`📊 Cache status: http://localhost:${PORT}/api/cache/status`);
-  console.log(`💾 Redis caching: ${redisClient.isOpen ? 'Enabled' : 'Disabled (will run without cache)'}`);
-});
+// Only start server if not in Vercel environment
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🌧️ Weather app server running on http://localhost:${PORT}`);
+    console.log(`📊 Cache status: http://localhost:${PORT}/api/cache/status`);
+    console.log(`💾 Redis caching: ${redisClient.isOpen ? 'Enabled' : 'Disabled (will run without cache)'}`);
+  });
+}
+
+// Export for Vercel
+module.exports = app;
 
 
 

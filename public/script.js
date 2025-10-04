@@ -67,9 +67,15 @@ class WeatherApp {
 
     getCurrentPosition() {
         return new Promise((resolve, reject) => {
+            // Check if geolocation is supported
+            if (!navigator.geolocation) {
+                reject(new Error('Geolocation is not supported by this browser'));
+                return;
+            }
+
             navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
-                timeout: 10000,
+                timeout: 15000, // Increased timeout for Vercel
                 maximumAge: 300000 // 5 minutes
             });
         });
@@ -90,17 +96,23 @@ class WeatherApp {
 
     async fetchWeatherData(latitude, longitude) {
         try {
+            console.log(`Fetching weather for: ${latitude}, ${longitude}`);
             const response = await fetch(`/api/weather?latitude=${latitude}&longitude=${longitude}`);
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
             const data = await response.json();
+            console.log('Weather data received:', data);
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch weather data');
+                throw new Error(data.error || `HTTP ${response.status}: Failed to fetch weather data`);
             }
 
             this.displayWeatherData(data);
         } catch (error) {
             console.error('Weather API error:', error);
-            this.showError('Failed to fetch weather data. Please try again later.');
+            this.showError(`Failed to fetch weather data: ${error.message}. Please try again later.`);
         }
     }
 
@@ -588,16 +600,16 @@ class WeatherApp {
     getRainMessages() {
         if (this.profanityMode) {
             return [
-                "Bloody hell, it's raining!",
-                "Damn it, grab your umbrella!",
-                "Crap, it's pouring outside!",
-                "Rain, rain, go to hell!",
-                "Time for indoor activities, dammit!",
+                "Of course it's fucking raining!",
+                "Damn it, grab your pissing umbrella!",
+                "Absolutely pissing it down",
+                "Dear rain, go fuck yourself. Sincerely, everyone",
+                "Not the kind of wet you're looking for",
                 "The sky is crying like a baby!",
-                "Wet weather ahead, what a pain!",
-                "Raindrops are falling on my head!",
-                "Better stay inside, this sucks!",
-                "It's a crappy rainy day!"
+                "It's wet and fucking miserable",
+                "There's no such thing as bad weather, except this shitty rain",
+                "Don't bother going outside, it's shite",
+                "Wet and woeful, stay the fuck inside"
             ];
         } else {
             return [
