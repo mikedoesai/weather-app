@@ -77,27 +77,47 @@
             </div>
         </div>
 
-        <!-- Profanity Toggle -->
-        <div class="max-w-md mx-auto mt-8 bg-white rounded-xl shadow-lg p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <i class="fas fa-language text-gray-600 mr-3"></i>
-                    <span class="text-gray-700 font-medium">F*ck You Forecast Mode</span>
+        <!-- Settings Panel -->
+        <div class="max-w-md mx-auto mt-8 space-y-4">
+            <!-- Temperature Unit Toggle -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-thermometer-half text-gray-600 mr-3"></i>
+                        <span class="text-gray-700 font-medium">Temperature Unit</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="temperature-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="profanity-toggle" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+                <p class="text-gray-500 text-xs mt-2 text-center">
+                    <span id="temperature-unit-text">Celsius</span> (auto-detected from your location)
+                </p>
             </div>
-            <p class="text-gray-500 text-xs mt-2 text-center">
-                Toggle for more offensive weather descriptions
-            </p>
+
+            <!-- Profanity Toggle -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-language text-gray-600 mr-3"></i>
+                        <span class="text-gray-700 font-medium">F*ck You Forecast Mode</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="profanity-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                <p class="text-gray-500 text-xs mt-2 text-center">
+                    Toggle for more offensive weather descriptions
+                </p>
+            </div>
         </div>
 
         <!-- Footer -->
         <div class="text-center mt-6">
             <p class="text-white opacity-75 text-sm">
-                Powered by <a href="https://open-meteo.com" class="underline hover:opacity-100" target="_blank">Open-Meteo</a>
+                Weather data provided by <a href="https://open-meteo.com" class="underline hover:opacity-100" target="_blank">Open-Meteo</a>.
             </p>
         </div>
     </div>

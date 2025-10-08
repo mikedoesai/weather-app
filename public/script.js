@@ -1,8 +1,11 @@
 class WeatherApp {
     constructor() {
         this.profanityMode = false;
+        this.temperatureUnit = 'celsius'; // Default to celsius
+        this.currentTemperatureCelsius = null; // Store the original Celsius value
         this.initializeElements();
         this.bindEvents();
+        this.initializeTemperatureUnit();
     }
 
     initializeElements() {
@@ -25,6 +28,10 @@ class WeatherApp {
         this.weatherDescription = document.getElementById('weather-description');
         this.precipitationInfo = document.getElementById('precipitation-info');
         this.errorMessage = document.getElementById('error-message');
+
+        // Temperature unit elements
+        this.temperatureToggle = document.getElementById('temperature-toggle');
+        this.temperatureUnitText = document.getElementById('temperature-unit-text');
     }
 
     bindEvents() {
@@ -33,6 +40,15 @@ class WeatherApp {
         this.retryBtn.addEventListener('click', () => this.getUserLocation());
         this.profanityToggle.addEventListener('change', (e) => {
             this.profanityMode = e.target.checked;
+        });
+        this.temperatureToggle.addEventListener('change', (e) => {
+            this.temperatureUnit = e.target.checked ? 'fahrenheit' : 'celsius';
+            this.updateTemperatureUnitDisplay();
+            this.saveTemperatureUnitPreference();
+            // If weather data is already displayed, update it with new unit
+            if (!this.weatherResult.classList.contains('hidden') && this.currentTemperatureCelsius !== null) {
+                this.updateDisplayedTemperature();
+            }
         });
     }
 
@@ -67,12 +83,6 @@ class WeatherApp {
 
     getCurrentPosition() {
         return new Promise((resolve, reject) => {
-            // Check if geolocation is supported
-            if (!navigator.geolocation) {
-                reject(new Error('Geolocation is not supported by this browser'));
-                return;
-            }
-
             navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
                 timeout: 15000, // Increased timeout for Vercel
@@ -134,8 +144,31 @@ class WeatherApp {
     displayWeatherData(data) {
         const { isRaining, temperature, weatherDescription, precipitation } = data;
 
-        // Set weather icon and status
-        if (isRaining) {
+        // Check for extremely hot weather first (overrides everything)
+        if (temperature > 30) {
+            this.weatherIcon.innerHTML = '<i class="fas fa-temperature-high text-red-600"></i>';
+            
+            const hotMessage = this.profanityMode 
+                ? "It's hotter than Satan's ballsack in here!" 
+                : "It's hot as hell in here!";
+            
+            this.rainStatus.innerHTML = `<span class="text-red-600 font-bold">${hotMessage}</span>`;
+            
+            // Set temperature and description for hot weather
+            this.currentTemperatureCelsius = temperature; // Store original Celsius value
+            const convertedTemp = this.convertTemperature(temperature);
+            this.temperature.innerHTML = `${convertedTemp}${this.getTemperatureUnitSymbol()}`;
+            this.weatherDescription.textContent = weatherDescription;
+            this.precipitationInfo.innerHTML = `
+                <i class="fas fa-tint mr-1"></i>
+                No precipitation
+            `;
+            
+            this.showState('weather-result');
+            return; // Exit early to prevent further processing
+        }
+        // Set weather icon and status for rain
+        else if (isRaining) {
             this.weatherIcon.innerHTML = '<i class="fas fa-cloud-rain text-blue-500"></i>';
             
             // Get appropriate messages based on profanity mode
@@ -297,14 +330,14 @@ class WeatherApp {
                 case 'overcast':
                     this.weatherIcon.innerHTML = '<i class="fas fa-cloud text-gray-500"></i>';
                     const overcastMessages = this.profanityMode ? [
-                        "No, it's not raining",
+                        "It's not raining but it's grey and shitty",
                         "Completely overcast, depressing!",
-                        "Heavy cloud cover, what a downer!",
-                        "Dense cloud layer, gloomy!",
-                        "Overcast but dry, at least there's that!",
-                        "Thick cloud blanket, depressing!",
-                        "Solid cloud cover, gloomy!",
-                        "Overcast conditions, what a bummer!",
+                        "Heavy cloud cover, what a debby downer!",
+                        "Dense cloud layer, all doom and gloomy",
+                        "Overcast but dry, better than pissing rain!",
+                        "Thick cloud blanket, depressing af!",
+                        "Grey as fuck out there, don't bother putting your shoes on!",
+                        "Not a single sky in the clouds... fuck sake!",
                         "Heavy cloudiness, depressing!",
                         "Dense overcast sky, gloomy!"
                     ] : [
@@ -329,13 +362,13 @@ class WeatherApp {
                         "No, it's not raining",
                         "Partly cloudy today, not bad!",
                         "Mix of sun and clouds, decent!",
-                        "Some clouds, some sun, alright!",
+                        "Today can't decide what it wants to be, too bloody relatable",
                         "Partly sunny weather, could be worse!",
-                        "Clouds and sunshine, not too shabby!",
-                        "Variable cloudiness, typical!",
-                        "Sunny with some clouds, decent!",
-                        "Partly clear skies, not bad!",
-                        "Mixed weather conditions, typical!"
+                        "Clouds and sunshine, well that's a fucking relief!",
+                        "As many clouds as fucks I could give right now",
+                        "Sunny with some clouds, fucking aye!",
+                        "Just a few clouds, I can almost see through this crappy day",
+                        "Mixed weather conditions, fucking indecisive as hell!"
                     ] : [
                         "No, it's not raining",
                         "Partly cloudy today!",
@@ -355,10 +388,10 @@ class WeatherApp {
                 case 'foggy':
                     this.weatherIcon.innerHTML = '<i class="fas fa-smog text-gray-400"></i>';
                     const foggyMessages = this.profanityMode ? [
-                        "No, it's not raining",
+                        "No, it's not raining. That's all you get.",
                         "Foggy conditions today, annoying!",
-                        "Misty weather outside, what a pain!",
-                        "Low visibility ahead, frustrating!",
+                        "Misty weather outside, you won't be able to see shit!",
+                        "Low visibility ahead, good day to avoid conversation",
                         "Fog but no rain, at least there's that!",
                         "Hazy conditions, annoying!",
                         "Misty morning, what a bummer!",
@@ -585,8 +618,15 @@ class WeatherApp {
             }
         }
 
-        // Set temperature
-        this.temperature.innerHTML = `${temperature}°C`;
+        // Set temperature with error handling
+        if (typeof temperature === 'number' && !isNaN(temperature)) {
+            this.currentTemperatureCelsius = temperature; // Store original Celsius value
+            const convertedTemp = this.convertTemperature(temperature);
+            this.temperature.innerHTML = `${convertedTemp}${this.getTemperatureUnitSymbol()}`;
+        } else {
+            this.currentTemperatureCelsius = null;
+            this.temperature.innerHTML = `N/A${this.getTemperatureUnitSymbol()}`;
+        }
 
         // Set weather description
         this.weatherDescription.textContent = weatherDescription;
@@ -645,27 +685,7 @@ class WeatherApp {
     getWeatherType(weatherDescription, temperature) {
         const description = weatherDescription.toLowerCase();
         
-        // Thunderstorm conditions
-        if (description.includes('thunderstorm') || description.includes('thunder')) {
-            return 'thunderstorm';
-        }
-        
-        // Heavy rain conditions
-        if (description.includes('heavy rain') || description.includes('violent rain')) {
-            return 'heavy_rain';
-        }
-        
-        // Light rain conditions
-        if (description.includes('light rain') || description.includes('slight rain')) {
-            return 'light_rain';
-        }
-        
-        // Drizzle conditions
-        if (description.includes('drizzle')) {
-            return 'drizzle';
-        }
-        
-        // Snow conditions
+        // Snow conditions (check before general snow)
         if (description.includes('heavy snow') || description.includes('blizzard')) {
             return 'heavy_snow';
         }
@@ -678,7 +698,7 @@ class WeatherApp {
             return 'snowy';
         }
         
-        // Fog and mist conditions
+        // Fog and mist conditions (check dense fog first)
         if (description.includes('dense fog') || description.includes('thick fog')) {
             return 'dense_fog';
         }
@@ -727,12 +747,72 @@ class WeatherApp {
             return 'freezing';
         } else if (temperature < 0) {
             return 'snowy';
-        } else if (temperature > 30) {
-            return 'hot_sunny';
         } else if (temperature > 20) {
             return 'sunny';
         } else {
-            return 'cloudy';
+            return 'overcast'; // Changed from 'cloudy' to 'overcast' since 'cloudy' is not a case
+        }
+    }
+
+    // Temperature unit detection and management methods
+    initializeTemperatureUnit() {
+        // Check for saved preference first
+        const savedUnit = localStorage.getItem('temperatureUnit');
+        if (savedUnit) {
+            this.temperatureUnit = savedUnit;
+            this.temperatureToggle.checked = savedUnit === 'fahrenheit';
+        } else {
+            // Auto-detect based on location
+            this.detectTemperatureUnitFromLocation();
+        }
+        this.updateTemperatureUnitDisplay();
+    }
+
+    detectTemperatureUnitFromLocation() {
+        // Countries that primarily use Fahrenheit
+        const fahrenheitCountries = [
+            'US', 'BS', 'BZ', 'KY', 'PW', 'FM', 'MH', 'LR', 'MM'
+        ];
+
+        // Try to detect country from browser locale
+        const locale = navigator.language || navigator.userLanguage;
+        const countryCode = locale.split('-')[1]?.toUpperCase();
+
+        if (countryCode && fahrenheitCountries.includes(countryCode)) {
+            this.temperatureUnit = 'fahrenheit';
+            this.temperatureToggle.checked = true;
+        } else {
+            // Default to Celsius for most of the world
+            this.temperatureUnit = 'celsius';
+            this.temperatureToggle.checked = false;
+        }
+    }
+
+    updateTemperatureUnitDisplay() {
+        const unitText = this.temperatureUnit === 'fahrenheit' ? 'Fahrenheit' : 'Celsius';
+        this.temperatureUnitText.textContent = unitText;
+    }
+
+    saveTemperatureUnitPreference() {
+        localStorage.setItem('temperatureUnit', this.temperatureUnit);
+    }
+
+    convertTemperature(celsius) {
+        if (this.temperatureUnit === 'fahrenheit') {
+            return Math.round((celsius * 9/5) + 32);
+        }
+        return Math.round(celsius);
+    }
+
+    getTemperatureUnitSymbol() {
+        return this.temperatureUnit === 'fahrenheit' ? '°F' : '°C';
+    }
+
+    updateDisplayedTemperature() {
+        // Use the stored Celsius value for conversion
+        if (this.currentTemperatureCelsius !== null) {
+            const convertedTemp = this.convertTemperature(this.currentTemperatureCelsius);
+            this.temperature.innerHTML = `${convertedTemp}${this.getTemperatureUnitSymbol()}`;
         }
     }
 }
@@ -741,6 +821,3 @@ class WeatherApp {
 document.addEventListener('DOMContentLoaded', () => {
     new WeatherApp();
 });
-
-
-
