@@ -179,3 +179,6 @@ Your app is working when:
 ---
 
 **Your weather app should now work perfectly on Vercel! 🌧️☀️**
+
+
+
