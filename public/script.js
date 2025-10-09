@@ -272,7 +272,7 @@ class WeatherApp {
                 case 'few_clouds':
                     this.weatherIcon.innerHTML = '<i class="fas fa-cloud-sun text-yellow-400"></i>';
                     const fewCloudsMessages = this.profanityMode ? [
-                        "No, it's not raining",
+                        "It's not fucking raining, I guess that's something",
                         "Just a few clouds, not bad!",
                         "Mostly clear with some clouds, decent!",
                         "Scattered clouds today, could be worse!",
@@ -301,7 +301,7 @@ class WeatherApp {
                 case 'broken_clouds':
                     this.weatherIcon.innerHTML = '<i class="fas fa-cloud text-gray-400"></i>';
                     const brokenCloudsMessages = this.profanityMode ? [
-                        "No, it's not raining",
+                        "It's not fucking raining, I guess that's something",
                         "Broken cloud cover, typical!",
                         "Variable cloudiness, what a mess!",
                         "Patchy clouds today, annoying!",
@@ -330,15 +330,15 @@ class WeatherApp {
                 case 'overcast':
                     this.weatherIcon.innerHTML = '<i class="fas fa-cloud text-gray-500"></i>';
                     const overcastMessages = this.profanityMode ? [
-                        "It's not raining but it's grey and shitty",
-                        "Completely overcast, depressing!",
+                        "It's not raining but it is grey and shitty",
+                        "Completely overcast, how damn depressing!",
                         "Heavy cloud cover, what a debby downer!",
                         "Dense cloud layer, all doom and gloomy",
                         "Overcast but dry, better than pissing rain!",
-                        "Thick cloud blanket, depressing af!",
+                        "Thick cloud blanket, the worst kind of blanket",
                         "Grey as fuck out there, don't bother putting your shoes on!",
-                        "Not a single sky in the clouds... fuck sake!",
-                        "Heavy cloudiness, depressing!",
+                        "The clouds are fucking everywhere",
+                        "Heavy cloudiness, how fucking depressing!",
                         "Dense overcast sky, gloomy!"
                     ] : [
                         "No, it's not raining",
@@ -821,3 +821,5 @@ class WeatherApp {
 document.addEventListener('DOMContentLoaded', () => {
     new WeatherApp();
 });
+
+// Trigger new deployment - temperature toggle fix applied
