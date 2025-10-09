@@ -1,27 +1,17 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server-simple.js",
-      "use": "@vercel/node"
+  "functions": {
+    "api/weather.js": {
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server-simple.js"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/server-simple.js"
+      "dest": "/public/$1"
     }
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "server-simple.js": {
-      "maxDuration": 30
-    }
   }
 }
