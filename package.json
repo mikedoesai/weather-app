@@ -10,7 +10,9 @@
     "start": "node server-simple.js",
     "dev": "nodemon server-simple.js",
     "build": "echo 'No build step needed'",
-    "vercel-build": "echo 'Vercel build completed'"
+    "vercel-build": "echo 'Vercel build completed'",
+    "validate": "node validate-vercel.js",
+    "pre-commit": "npm run validate"
   },
   "keywords": ["weather", "rain", "express", "nodejs"],
   "author": "",

@@ -1,5 +1,14 @@
 # 🔧 Vercel Weather App Troubleshooting Guide
 
+## 📋 Pre-Commit Checklist
+**ALWAYS CHECK BEFORE COMMITTING:**
+- [ ] Review [Vercel Error List](https://vercel.com/docs/errors/error-list)
+- [ ] Validate vercel.json configuration
+- [ ] Check for conflicting builds/functions configuration
+- [ ] Ensure all dependencies are Vercel-compatible
+- [ ] Test locally with `vercel dev`
+- [ ] See detailed checklist in `VERCEL_PRE_COMMIT_CHECKLIST.md`
+
 ## 🚨 **Common Issues & Solutions**
 
 ### **Issue #1: Geolocation Not Working**
