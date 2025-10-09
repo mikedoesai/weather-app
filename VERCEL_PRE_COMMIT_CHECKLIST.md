@@ -1,8 +1,17 @@
 # 🔍 Vercel Pre-Commit Checklist
 
-## Before Every GitHub Commit - Vercel Deployment Validation
+## Before Every GitHub Commit - Comprehensive Code Review
 
-### 1. Configuration Validation
+### 1. Code Review Process
+- [ ] **Run Code Review Script**
+  ```bash
+  npm run review
+  ```
+- [ ] **Fix any errors found**
+- [ ] **Address warnings if possible**
+- [ ] **Verify all checks pass**
+
+### 2. Configuration Validation
 - [ ] **vercel.json Structure**
   - [ ] No conflicting `builds` and `functions` configurations
   - [ ] Uses modern Vercel configuration (version 2)

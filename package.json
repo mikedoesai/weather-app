@@ -12,7 +12,8 @@
     "build": "echo 'No build step needed'",
     "vercel-build": "echo 'Vercel build completed'",
     "validate": "node validate-vercel.js",
-    "pre-commit": "npm run validate"
+    "review": "node pre-commit-review.js",
+    "pre-commit": "npm run validate && npm run review"
   },
   "keywords": ["weather", "rain", "express", "nodejs"],
   "author": "",
