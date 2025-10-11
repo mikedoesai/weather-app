@@ -23,6 +23,22 @@
             <p class="text-xl text-white opacity-90">Find out if it's raining in your area</p>
         </div>
 
+        <!-- Weather Warning Banner -->
+        <div id="weather-warning-banner" class="hidden max-w-md mx-auto mb-6">
+            <div class="text-white p-4 rounded-lg shadow-lg" style="background-color: #C22222;">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-bold" id="warning-title">Weather Warning</h3>
+                        <p class="text-sm mt-1" id="warning-description">Bad weather is no joke! Please follow local guidance and stay safe.</p>
+                        <p class="text-xs mt-1 opacity-90" id="warning-duration"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Card -->
         <div class="max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
             <!-- Weather Display Area -->

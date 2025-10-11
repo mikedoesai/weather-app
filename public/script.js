@@ -3,9 +3,11 @@ class WeatherApp {
         this.profanityMode = false;
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
+        this.openWeatherApiKey = '5fcfc173deb068b3716c14a2d27c8ee3'; // OpenWeatherMap API key
         this.initializeElements();
         this.bindEvents();
         this.initializeTemperatureUnit();
+        this.hideWeatherWarning(); // Ensure banner is hidden on startup
     }
 
     initializeElements() {
@@ -32,6 +34,12 @@ class WeatherApp {
         // Temperature unit elements
         this.temperatureToggle = document.getElementById('temperature-toggle');
         this.temperatureUnitText = document.getElementById('temperature-unit-text');
+
+        // Weather warning elements
+        this.weatherWarningBanner = document.getElementById('weather-warning-banner');
+        this.warningTitle = document.getElementById('warning-title');
+        this.warningDescription = document.getElementById('warning-description');
+        this.warningDuration = document.getElementById('warning-duration');
     }
 
     bindEvents() {
@@ -133,6 +141,10 @@ class WeatherApp {
             
             const data = await response.json();
             console.log('Weather data received:', data);
+
+            // Fetch weather alerts from OpenWeatherMap
+            const alerts = await this.fetchWeatherAlerts(latitude, longitude);
+            data.alerts = alerts;
 
             this.displayWeatherData(data);
         } catch (error) {
@@ -645,6 +657,13 @@ class WeatherApp {
         }
 
         this.showState('weather-result');
+        
+        // Display weather alerts if present
+        if (data.alerts && data.alerts.length > 0) {
+            this.displayWeatherAlerts(data.alerts);
+        } else {
+            this.hideWeatherWarning();
+        }
     }
 
     showError(message) {
@@ -813,6 +832,91 @@ class WeatherApp {
         if (this.currentTemperatureCelsius !== null) {
             const convertedTemp = this.convertTemperature(this.currentTemperatureCelsius);
             this.temperature.innerHTML = `${convertedTemp}${this.getTemperatureUnitSymbol()}`;
+        }
+    }
+
+    // Fetch weather alerts from OpenWeatherMap API
+    async fetchWeatherAlerts(latitude, longitude) {
+        try {
+            // Use the newer One Call API 3.0 endpoint
+            const alertsUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${this.openWeatherApiKey}&exclude=current,minutely,hourly,daily`;
+            
+            console.log('Fetching weather alerts from OpenWeatherMap...');
+            
+            const response = await fetch(alertsUrl);
+            
+            if (!response.ok) {
+                console.warn('Failed to fetch weather alerts:', response.status, response.statusText);
+                return [];
+            }
+            
+            const data = await response.json();
+            console.log('Weather alerts received:', data.alerts);
+            
+            return data.alerts || [];
+        } catch (error) {
+            console.warn('Error fetching weather alerts:', error);
+            return [];
+        }
+    }
+
+    // Display weather alerts
+    displayWeatherAlerts(alerts) {
+        if (!alerts || alerts.length === 0) {
+            this.hideWeatherWarning();
+            return;
+        }
+
+        // Get the most severe alert
+        const alert = alerts[0];
+        
+        // Categorize the alert type
+        const alertType = this.categorizeAlert(alert.event);
+        
+        // Update banner content
+        this.warningTitle.textContent = alertType;
+        this.warningDescription.textContent = "Bad weather is no joke! Please follow local guidance and stay safe.";
+        
+        // Format duration
+        const startTime = new Date(alert.start * 1000);
+        const endTime = new Date(alert.end * 1000);
+        this.warningDuration.textContent = `Active until: ${endTime.toLocaleString()}`;
+        
+        // Show the banner
+        this.weatherWarningBanner.classList.remove('hidden');
+        
+        console.log('Weather alert displayed:', alert);
+    }
+
+    // Hide weather warning banner
+    hideWeatherWarning() {
+        this.weatherWarningBanner.classList.add('hidden');
+    }
+
+    // Categorize alert types
+    categorizeAlert(eventName) {
+        const event = eventName.toLowerCase();
+        
+        if (event.includes('thunderstorm') || event.includes('storm')) {
+            return 'Thunderstorm Warning';
+        } else if (event.includes('tornado')) {
+            return 'Tornado Warning';
+        } else if (event.includes('flood')) {
+            return 'Flood Warning';
+        } else if (event.includes('hurricane') || event.includes('typhoon')) {
+            return 'Hurricane Warning';
+        } else if (event.includes('blizzard') || event.includes('snow')) {
+            return 'Winter Storm Warning';
+        } else if (event.includes('heat')) {
+            return 'Heat Warning';
+        } else if (event.includes('cold') || event.includes('freeze')) {
+            return 'Cold Weather Warning';
+        } else if (event.includes('wind')) {
+            return 'High Wind Warning';
+        } else if (event.includes('fog')) {
+            return 'Dense Fog Warning';
+        } else {
+            return 'Weather Warning';
         }
     }
 }
