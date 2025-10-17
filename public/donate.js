@@ -4,6 +4,7 @@ class DonationSystem {
     constructor() {
         this.initializeElements();
         this.bindEvents();
+        this.initializeDefaultSelection();
     }
 
     initializeElements() {
@@ -26,13 +27,33 @@ class DonationSystem {
         // Duration selection
         this.durationSelect.addEventListener('change', () => this.updatePrice());
         
-        // Package selection
-        document.querySelectorAll('.package-option').forEach(option => {
-            option.addEventListener('click', () => this.selectPackage(option));
+        // Package selection - use both direct and delegated events for reliability
+        const packageOptions = document.querySelectorAll('.package-option');
+        
+        packageOptions.forEach((option) => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.selectPackage(option);
+            });
+        });
+        
+        // Also use event delegation as backup
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.package-option')) {
+                const packageElement = e.target.closest('.package-option');
+                this.selectPackage(packageElement);
+            }
         });
         
         // Form submission
         this.donationForm.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+    
+    initializeDefaultSelection() {
+        // No auto-selection - let user choose
+        // Just ensure price display is hidden initially
+        this.priceDisplay.classList.add('hidden');
     }
 
     updateCharCount() {
@@ -48,15 +69,36 @@ class DonationSystem {
         }
     }
 
-    updatePrice() {
+    updatePrice(skipVisualUpdate = false) {
         const selectedOption = this.durationSelect.options[this.durationSelect.selectedIndex];
         const price = selectedOption.getAttribute('data-price');
         
         if (price) {
             this.totalPrice.textContent = `$${price}`;
             this.priceDisplay.classList.remove('hidden');
+            
+            // Update visual selection to match dropdown (only if not called from selectPackage)
+            if (!skipVisualUpdate) {
+                this.updateVisualSelection();
+            }
         } else {
             this.priceDisplay.classList.add('hidden');
+        }
+    }
+    
+    updateVisualSelection() {
+        const selectedDuration = this.durationSelect.value;
+        
+        // Remove selected class from all packages
+        document.querySelectorAll('.package-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Find and select the matching package
+        const matchingPackage = document.querySelector(`.package-option[data-duration="${selectedDuration}"]`);
+        if (matchingPackage) {
+            matchingPackage.classList.add('selected');
+            this.selectedPackage = matchingPackage;
         }
     }
 
@@ -74,7 +116,13 @@ class DonationSystem {
         const price = packageElement.getAttribute('data-price');
         
         this.durationSelect.value = duration;
-        this.updatePrice();
+        this.updatePrice(true); // Skip visual update since we're handling it manually
+        
+        // Store the selected package for persistence
+        this.selectedPackage = packageElement;
+        
+        // Force a re-render to ensure the class is applied
+        packageElement.offsetHeight;
     }
 
     validateForm() {
@@ -227,8 +275,26 @@ class DonationSystem {
     }
 
     resetForm() {
+        // Reset form fields
+        this.donationForm.reset();
+        
+        // Clear package selection
+        document.querySelectorAll('.package-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Reset to default selection
+        this.initializeDefaultSelection();
+        
+        // Reset button
         this.donateButton.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Proceed to Payment';
         this.donateButton.disabled = false;
+        
+        // Hide price display
+        this.priceDisplay.classList.add('hidden');
+        
+        // Reset character count
+        this.updateCharCount();
     }
 }
 

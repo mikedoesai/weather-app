@@ -97,3 +97,7 @@ Thumbs.db
 dist/
 build/
 
+# Testing and sensitive files (never commit to GitHub)
+TESTING_GUIDE.md
+public/config.js
+

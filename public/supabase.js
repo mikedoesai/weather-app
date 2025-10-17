@@ -1,6 +1,8 @@
 // Supabase configuration
-import { createClient } from '@supabase/supabase-js'
-import { config } from './config.example.js'
+import { config } from './config.js'
+
+// Use Supabase from CDN (loaded in HTML)
+const { createClient } = window.supabase;
 
 export const supabase = createClient(config.supabase.url, config.supabase.anonKey)
 

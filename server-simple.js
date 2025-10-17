@@ -16,6 +16,21 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Configuration endpoint - serves environment variables to frontend
+app.get('/api/config', (req, res) => {
+  res.json({
+    openWeatherApiKey: process.env.OPENWEATHER_API_KEY || '5fcfc173deb068b3716c14a2d27c8ee3',
+    supabase: {
+      url: process.env.SUPABASE_URL || 'https://tzhzfiiwecohdkmxvol.supabase.co',
+      anonKey: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6aHpmaXlpd2Vjb2hka214dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTk3MDgsImV4cCI6MjA3NjI3NTcwOH0.KIgVbyEw8DeaZlKBCZie-8qu9v4Bz9UZDTpwV5UeCek'
+    },
+    admin: {
+      password: process.env.ADMIN_PASSWORD || 'raincheck2024'
+    },
+    isProduction: process.env.NODE_ENV === 'production'
+  });
+});
+
 // Debug endpoint
 app.get('/api/debug', (req, res) => {
   res.json({
