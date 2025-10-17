@@ -1,4 +1,6 @@
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
+  console.log('Config API handler called:', req.method, req.url);
+  
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -6,6 +8,7 @@ module.exports = async (req, res) => {
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     res.status(200).end();
     return;
   }
@@ -33,4 +36,4 @@ module.exports = async (req, res) => {
       details: error.message 
     });
   }
-};
+}
