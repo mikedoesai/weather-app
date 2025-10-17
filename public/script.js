@@ -1,10 +1,14 @@
+import { WeatherAppDatabase } from './supabase.js';
+import { config } from './config.example.js';
+import { safeSetInnerHTML, validateInput, generateSecureId, rateLimiter } from './utils/security.js';
+
 class WeatherApp {
     constructor() {
         // Load profanity mode from localStorage or default to false
         this.profanityMode = localStorage.getItem('weatherAppProfanityMode') === 'true';
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
-        this.openWeatherApiKey = '5fcfc173deb068b3716c14a2d27c8ee3'; // OpenWeatherMap API key
+        this.openWeatherApiKey = config.openWeatherApiKey;
         this.initializeElements();
         this.bindEvents();
         this.initializeTemperatureUnit();
@@ -167,14 +171,14 @@ class WeatherApp {
             const alerts = await this.fetchWeatherAlerts(latitude, longitude);
             data.alerts = alerts;
 
-            this.displayWeatherData(data);
+            await this.displayWeatherData(data);
         } catch (error) {
             console.error('Weather API error:', error);
             this.showError(`Failed to fetch weather data: ${error.message}. Please try again later.`);
         }
     }
 
-    displayWeatherData(data) {
+    async displayWeatherData(data) {
         const { isRaining, temperature, weatherDescription, precipitation } = data;
 
         // Track usage data for admin panel
@@ -208,7 +212,7 @@ class WeatherApp {
             this.weatherIcon.innerHTML = '<i class="fas fa-cloud-rain text-blue-500"></i>';
             
             // Get appropriate messages based on profanity mode
-            const rainMessages = this.getRainMessages();
+            const rainMessages = await this.getRainMessages();
             
             // Pick a random message
             const randomMessage = rainMessages[Math.floor(Math.random() * rainMessages.length)];
@@ -224,10 +228,10 @@ class WeatherApp {
             const weatherType = this.getWeatherType(weatherDescription, temperature);
             
             // Check for sponsored messages for this weather type
-            const sponsoredMessage = this.getSponsoredMessage(weatherType);
+            const sponsoredMessage = await this.getSponsoredMessage(weatherType);
             if (sponsoredMessage) {
                 this.rainStatus.innerHTML = this.displaySponsoredMessage(sponsoredMessage);
-                this.trackUsage(data);
+                await this.trackUsage(data);
                 if (this.profanityMode) {
                     this.showMessageFeedback();
                 } else {
@@ -865,9 +869,9 @@ class WeatherApp {
         this.showState('error-state');
     }
 
-    getRainMessages() {
+    async getRainMessages() {
         // Check for active sponsored messages first
-        const sponsoredMessage = this.getSponsoredMessage('rain');
+        const sponsoredMessage = await this.getSponsoredMessage('rain');
         if (sponsoredMessage) {
             return [sponsoredMessage];
         }
@@ -1216,20 +1220,30 @@ class WeatherApp {
         this.messageFeedback.classList.add('hidden');
     }
 
-    submitFeedback(type) {
+    async submitFeedback(type) {
         // Store feedback data
         const feedbackData = {
+            user_id: this.generateUserFingerprint(),
             type: type,
             message: this.rainStatus.textContent,
-            profanityMode: this.profanityMode,
-            timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent
+            profanity_mode: this.profanityMode
         };
 
-        // Store in localStorage for now (could be sent to server later)
-        const existingFeedback = JSON.parse(localStorage.getItem('weatherAppFeedback') || '[]');
-        existingFeedback.push(feedbackData);
-        localStorage.setItem('weatherAppFeedback', JSON.stringify(existingFeedback));
+        try {
+            // Store in Supabase
+            await WeatherAppDatabase.addFeedback(feedbackData);
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            // Fallback to localStorage if Supabase fails
+            const existingFeedback = JSON.parse(localStorage.getItem('weatherAppFeedback') || '[]');
+            existingFeedback.push({
+                ...feedbackData,
+                timestamp: new Date().toISOString(),
+                profanityMode: feedbackData.profanity_mode,
+                userAgent: navigator.userAgent
+            });
+            localStorage.setItem('weatherAppFeedback', JSON.stringify(existingFeedback));
+        }
 
         // Hide the question text and buttons
         const questionText = this.messageFeedback.querySelector('p');
@@ -1285,29 +1299,42 @@ class WeatherApp {
     }
 
     // Track usage data for admin panel
-    trackUsage(weatherData) {
+    async trackUsage(weatherData) {
         const usageData = {
-            timestamp: new Date().toISOString(),
-            userId: this.generateUserFingerprint(),
-            profanityMode: this.profanityMode,
-            temperatureUnit: this.temperatureUnit,
-            weatherType: this.getWeatherType(weatherData.weatherDescription, weatherData.temperature),
-            isRaining: weatherData.isRaining,
+            user_id: this.generateUserFingerprint(),
+            weather_type: this.getWeatherType(weatherData.weatherDescription, weatherData.temperature),
+            profanity_mode: this.profanityMode,
+            temp_unit: this.temperatureUnit,
+            is_raining: weatherData.isRaining,
             temperature: weatherData.temperature,
             location: weatherData.location,
-            userAgent: navigator.userAgent
+            user_agent: navigator.userAgent
         };
 
-        // Store in localStorage
-        const existingUsage = JSON.parse(localStorage.getItem('weatherAppUsage') || '[]');
-        existingUsage.push(usageData);
-        
-        // Keep only last 1000 entries to prevent localStorage from getting too large
-        if (existingUsage.length > 1000) {
-            existingUsage.splice(0, existingUsage.length - 1000);
+        try {
+            // Store in Supabase
+            await WeatherAppDatabase.addUsageData(usageData);
+        } catch (error) {
+            console.error('Error tracking usage:', error);
+            // Fallback to localStorage if Supabase fails
+            const existingUsage = JSON.parse(localStorage.getItem('weatherAppUsage') || '[]');
+            existingUsage.push({
+                ...usageData,
+                timestamp: new Date().toISOString(),
+                userId: usageData.user_id,
+                profanityMode: usageData.profanity_mode,
+                temperatureUnit: usageData.temp_unit,
+                isRaining: usageData.is_raining,
+                userAgent: usageData.user_agent
+            });
+            
+            // Keep only last 1000 entries to prevent localStorage from getting too large
+            if (existingUsage.length > 1000) {
+                existingUsage.splice(0, existingUsage.length - 1000);
+            }
+            
+            localStorage.setItem('weatherAppUsage', JSON.stringify(existingUsage));
         }
-        
-        localStorage.setItem('weatherAppUsage', JSON.stringify(existingUsage));
 
         // Track with Google Analytics
         this.trackGoogleAnalytics('weather_check', {
@@ -1327,39 +1354,67 @@ class WeatherApp {
     }
 
     // Sponsored messages system
-    getSponsoredMessage(weatherType) {
-        const sponsorships = JSON.parse(localStorage.getItem('weatherAppSponsorships') || '[]');
-        const now = new Date();
-        
-        // Find active sponsorships that match the weather type
-        const activeSponsorships = sponsorships.filter(sponsorship => {
-            const startDate = new Date(sponsorship.startDate);
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + sponsorship.duration);
-            return now >= startDate && now <= endDate && 
-                   sponsorship.status === 'active' && 
-                   sponsorship.weatherType === weatherType;
-        });
-        
-        if (activeSponsorships.length === 0) {
-            return null;
+    async getSponsoredMessage(weatherType) {
+        try {
+            const sponsorships = await WeatherAppDatabase.getSponsorships();
+            const now = new Date();
+            
+            // Find active sponsorships that match the weather type
+            const activeSponsorships = sponsorships.filter(sponsorship => {
+                const startDate = new Date(sponsorship.start_date);
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + sponsorship.duration);
+                return now >= startDate && now <= endDate && 
+                       sponsorship.status === 'active' && 
+                       sponsorship.weather_type === weatherType;
+            });
+            
+            if (activeSponsorships.length === 0) {
+                return null;
+            }
+            
+            // Randomly select from active sponsorships
+            const randomSponsorship = activeSponsorships[Math.floor(Math.random() * activeSponsorships.length)];
+            
+            // Track sponsorship display
+            this.trackGoogleAnalytics('sponsored_message_displayed', {
+                sponsor_name: randomSponsorship.sponsor,
+                weather_type: weatherType,
+                sponsorship_id: randomSponsorship.id
+            });
+            
+            return {
+                message: randomSponsorship.message,
+                sponsor: randomSponsorship.sponsor,
+                isSponsored: true
+            };
+        } catch (error) {
+            console.error('Error getting sponsored message:', error);
+            // Fallback to localStorage if Supabase fails
+            const sponsorships = JSON.parse(localStorage.getItem('weatherAppSponsorships') || '[]');
+            const now = new Date();
+            
+            const activeSponsorships = sponsorships.filter(sponsorship => {
+                const startDate = new Date(sponsorship.startDate);
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + sponsorship.duration);
+                return now >= startDate && now <= endDate && 
+                       sponsorship.status === 'active' && 
+                       sponsorship.weatherType === weatherType;
+            });
+            
+            if (activeSponsorships.length === 0) {
+                return null;
+            }
+            
+            const randomSponsorship = activeSponsorships[Math.floor(Math.random() * activeSponsorships.length)];
+            
+            return {
+                message: randomSponsorship.message,
+                sponsor: randomSponsorship.sponsorName,
+                isSponsored: true
+            };
         }
-        
-        // Randomly select from active sponsorships
-        const randomSponsorship = activeSponsorships[Math.floor(Math.random() * activeSponsorships.length)];
-        
-        // Track sponsorship display
-        this.trackGoogleAnalytics('sponsored_message_displayed', {
-            sponsor_name: randomSponsorship.sponsorName,
-            weather_type: weatherType,
-            sponsorship_id: randomSponsorship.id
-        });
-        
-        return {
-            message: randomSponsorship.message,
-            sponsor: randomSponsorship.sponsorName,
-            isSponsored: true
-        };
     }
 
     displaySponsoredMessage(messageData) {

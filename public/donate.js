@@ -1,3 +1,5 @@
+import { WeatherAppDatabase } from './supabase.js';
+
 class DonationSystem {
     constructor() {
         this.initializeElements();
@@ -143,49 +145,70 @@ class DonationSystem {
         this.processPayment(formData);
     }
 
-    processPayment(formData) {
+    async processPayment(formData) {
         // Show loading state
         this.donateButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
         this.donateButton.disabled = true;
 
         // Simulate payment processing delay
-        setTimeout(() => {
-            // Store sponsorship data
-            this.storeSponsorship(formData);
-            
-            // Show success message
-            this.showSuccessMessage(formData);
-            
-            // Reset form
-            this.resetForm();
+        setTimeout(async () => {
+            try {
+                // Store sponsorship data
+                await this.storeSponsorship(formData);
+                
+                // Show success message
+                this.showSuccessMessage(formData);
+                
+                // Reset form
+                this.resetForm();
+            } catch (error) {
+                console.error('Error processing payment:', error);
+                alert('Error processing your sponsorship. Please try again.');
+                this.donateButton.innerHTML = '<i class="fas fa-gem mr-2"></i>Sponsor Message';
+                this.donateButton.disabled = false;
+            }
         }, 2000);
     }
 
-    storeSponsorship(formData) {
-        // Calculate end date
-        const startDate = new Date();
-        const duration = parseInt(formData.duration);
-        const endDate = new Date(startDate.getTime() + (duration * 24 * 60 * 60 * 1000));
+    async storeSponsorship(formData) {
+        try {
+            const sponsorship = {
+                sponsor: formData.sponsorName,
+                message: formData.message,
+                weather_type: formData.weatherType,
+                duration: parseInt(formData.duration),
+                price: parseFloat(formData.price),
+                status: formData.status
+            };
 
-        const sponsorship = {
-            id: Date.now().toString(),
-            message: formData.message,
-            sponsor: formData.sponsorName,
-            weatherType: formData.weatherType,
-            startDate: startDate.toISOString(),
-            endDate: endDate.toISOString(),
-            duration: duration,
-            price: formData.price,
-            status: formData.status,
-            timestamp: formData.timestamp
-        };
+            // Store in Supabase
+            const result = await WeatherAppDatabase.addSponsorship(sponsorship);
+            console.log('Sponsorship created:', result);
+        } catch (error) {
+            console.error('Error storing sponsorship:', error);
+            // Fallback to localStorage if Supabase fails
+            const startDate = new Date();
+            const duration = parseInt(formData.duration);
+            const endDate = new Date(startDate.getTime() + (duration * 24 * 60 * 60 * 1000));
 
-        // Store in localStorage (in a real app, this would go to a server)
-        const existingSponsorships = JSON.parse(localStorage.getItem('weatherAppSponsorships') || '[]');
-        existingSponsorships.push(sponsorship);
-        localStorage.setItem('weatherAppSponsorships', JSON.stringify(existingSponsorships));
+            const sponsorship = {
+                id: Date.now().toString(),
+                message: formData.message,
+                sponsor: formData.sponsorName,
+                weatherType: formData.weatherType,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                duration: duration,
+                price: formData.price,
+                status: formData.status,
+                timestamp: formData.timestamp
+            };
 
-        console.log('Sponsorship created:', sponsorship);
+            const existingSponsorships = JSON.parse(localStorage.getItem('weatherAppSponsorships') || '[]');
+            existingSponsorships.push(sponsorship);
+            localStorage.setItem('weatherAppSponsorships', JSON.stringify(existingSponsorships));
+            console.log('Sponsorship created (fallback):', sponsorship);
+        }
     }
 
     showSuccessMessage(formData) {

@@ -15,18 +15,21 @@
     "review": "node pre-commit-review.js",
     "pre-commit": "npm run validate && npm run review"
   },
-  "keywords": ["weather", "rain", "express", "nodejs"],
+  "keywords": [
+    "weather",
+    "rain",
+    "express",
+    "nodejs"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.75.1",
     "cors": "^2.8.5",
+    "express": "^4.18.2",
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   }
 }
-
-
-
