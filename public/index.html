@@ -4,11 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rain Check - Weather App</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
     <style>
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #29325F;
         }
     </style>
 </head>
@@ -16,10 +26,9 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
-                <i class="fas fa-cloud-rain mr-4"></i>
-                Rain Check
-            </h1>
+            <div class="mb-4">
+                <img src="logo.svg" alt="Rain Check Logo" class="mx-auto h-16 md:h-20 w-auto max-w-xs">
+            </div>
             <p class="text-xl text-white opacity-90">Find out if it's raining in your area</p>
         </div>
 
@@ -71,7 +80,26 @@
                     <div id="rain-status" class="text-3xl font-bold mb-2"></div>
                     <div id="temperature" class="text-2xl text-gray-600 mb-2"></div>
                     <div id="weather-description" class="text-lg text-gray-500 mb-4"></div>
-                    <div id="precipitation-info" class="text-sm text-gray-400 mb-6"></div>
+                    <div id="precipitation-info" class="text-sm text-gray-400 mb-4"></div>
+                    
+                    <!-- Message Feedback Section -->
+                    <div id="message-feedback" class="hidden bg-gray-100 border-2 border-gray-300 rounded-xl p-4 mb-4 shadow-md">
+                        <div class="text-center">
+                            <p class="text-sm text-gray-700 mb-3 font-medium">Did you like this forecast?</p>
+                            <div class="flex justify-center space-x-4">
+                                <button id="thumbs-up" class="feedback-btn bg-green-200 hover:bg-green-300 text-green-700 w-12 h-12 rounded-full transition duration-300 transform hover:scale-110 flex items-center justify-center border-2 border-green-300 shadow-sm">
+                                    <i class="fas fa-thumbs-up text-xl"></i>
+                                </button>
+                                <button id="thumbs-down" class="feedback-btn bg-red-200 hover:bg-red-300 text-red-700 w-12 h-12 rounded-full transition duration-300 transform hover:scale-110 flex items-center justify-center border-2 border-red-300 shadow-sm">
+                                    <i class="fas fa-thumbs-down text-xl"></i>
+                                </button>
+                            </div>
+                            <div id="feedback-thanks" class="hidden py-4">
+                                <p class="text-sm text-green-600 font-medium">Thanks for your feedback! 🎉</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button id="check-again-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition duration-300">
                         <i class="fas fa-refresh mr-2"></i>
                         Check Again
@@ -107,7 +135,7 @@
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
-                <p class="text-gray-500 text-xs mt-2 text-center">
+                <p class="text-gray-500 text-xs mt-2 text-left">
                     <span id="temperature-unit-text">Celsius</span> (auto-detected from your location)
                 </p>
             </div>
@@ -124,17 +152,23 @@
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
-                <p class="text-gray-500 text-xs mt-2 text-center">
+                <p class="text-gray-500 text-xs mt-2 text-left">
                     Toggle for more offensive weather descriptions
                 </p>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="text-center mt-6">
+        <div class="text-center mt-6 space-y-2">
             <p class="text-white opacity-75 text-sm">
                 Weather data provided by <a href="https://open-meteo.com" class="underline hover:opacity-100" target="_blank">Open-Meteo</a>.
             </p>
+            <div class="flex justify-center space-x-4">
+                <a href="donate.html" class="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm mt-4">
+                    <i class="fas fa-gem mr-2"></i>
+                    Sponsor a Message
+                </a>
+            </div>
         </div>
     </div>
 

@@ -1,13 +1,16 @@
 class WeatherApp {
     constructor() {
-        this.profanityMode = false;
+        // Load profanity mode from localStorage or default to false
+        this.profanityMode = localStorage.getItem('weatherAppProfanityMode') === 'true';
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
         this.openWeatherApiKey = '5fcfc173deb068b3716c14a2d27c8ee3'; // OpenWeatherMap API key
         this.initializeElements();
         this.bindEvents();
         this.initializeTemperatureUnit();
+        this.initializeProfanityToggle();
         this.hideWeatherWarning(); // Ensure banner is hidden on startup
+        this.clearTestSponsoredMessages(); // Clear any test data
     }
 
     initializeElements() {
@@ -40,6 +43,12 @@ class WeatherApp {
         this.warningTitle = document.getElementById('warning-title');
         this.warningDescription = document.getElementById('warning-description');
         this.warningDuration = document.getElementById('warning-duration');
+
+        // Feedback elements
+        this.messageFeedback = document.getElementById('message-feedback');
+        this.thumbsUpBtn = document.getElementById('thumbs-up');
+        this.thumbsDownBtn = document.getElementById('thumbs-down');
+        this.feedbackThanks = document.getElementById('feedback-thanks');
     }
 
     bindEvents() {
@@ -48,16 +57,28 @@ class WeatherApp {
         this.retryBtn.addEventListener('click', () => this.getUserLocation());
         this.profanityToggle.addEventListener('change', (e) => {
             this.profanityMode = e.target.checked;
+            // Save profanity mode state to localStorage
+            localStorage.setItem('weatherAppProfanityMode', this.profanityMode.toString());
+            this.trackGoogleAnalytics('profanity_toggle', {
+                enabled: this.profanityMode
+            });
         });
         this.temperatureToggle.addEventListener('change', (e) => {
             this.temperatureUnit = e.target.checked ? 'fahrenheit' : 'celsius';
             this.updateTemperatureUnitDisplay();
             this.saveTemperatureUnitPreference();
+            this.trackGoogleAnalytics('temperature_unit_change', {
+                unit: this.temperatureUnit
+            });
             // If weather data is already displayed, update it with new unit
             if (!this.weatherResult.classList.contains('hidden') && this.currentTemperatureCelsius !== null) {
                 this.updateDisplayedTemperature();
             }
         });
+        
+        // Feedback event listeners
+        this.thumbsUpBtn.addEventListener('click', () => this.submitFeedback('positive'));
+        this.thumbsDownBtn.addEventListener('click', () => this.submitFeedback('negative'));
     }
 
     showState(state) {
@@ -156,6 +177,9 @@ class WeatherApp {
     displayWeatherData(data) {
         const { isRaining, temperature, weatherDescription, precipitation } = data;
 
+        // Track usage data for admin panel
+        this.trackUsage(data);
+
         // Check for extremely hot weather first (overrides everything)
         if (temperature > 30) {
             this.weatherIcon.innerHTML = '<i class="fas fa-temperature-high text-red-600"></i>';
@@ -188,10 +212,30 @@ class WeatherApp {
             
             // Pick a random message
             const randomMessage = rainMessages[Math.floor(Math.random() * rainMessages.length)];
-            this.rainStatus.innerHTML = `<span style="color: #10769C;">${randomMessage}</span>`;
+            
+            // Check if it's a sponsored message
+            if (typeof randomMessage === 'object' && randomMessage.isSponsored) {
+                this.rainStatus.innerHTML = this.displaySponsoredMessage(randomMessage);
+            } else {
+                this.rainStatus.innerHTML = `<span style="color: #10769C;">${randomMessage}</span>`;
+            }
         } else {
             // Determine weather type based on description and temperature
             const weatherType = this.getWeatherType(weatherDescription, temperature);
+            
+            // Check for sponsored messages for this weather type
+            const sponsoredMessage = this.getSponsoredMessage(weatherType);
+            if (sponsoredMessage) {
+                this.rainStatus.innerHTML = this.displaySponsoredMessage(sponsoredMessage);
+                this.trackUsage(data);
+                if (this.profanityMode) {
+                    this.showMessageFeedback();
+                } else {
+                    this.hideMessageFeedback();
+                }
+                this.showState('weather-result');
+                return; // Exit early to prevent further processing
+            }
             
             switch (weatherType) {
                 case 'clear_sky':
@@ -235,7 +279,38 @@ class WeatherApp {
                         "Lovely sunny weather, it's about time!",
                         "Clear skies ahead, finally!",
                         "Sunny and warm, thank goodness!",
-                        "Enjoy the sunshine, damn it!"
+                        "Enjoy the sunshine, damn it!",
+                        "The sun is actually showing up for once!",
+                        "Beautiful day, no complaints here!",
+                        "Sunshine is finally doing its job!",
+                        "Perfect weather, can't argue with that!",
+                        "The sun is being generous today!",
+                        "Lovely day, about damn time!",
+                        "Sunshine and happiness, finally!",
+                        "Great weather, no rain in sight!",
+                        "The sun is shining like it means it!",
+                        "Beautiful day, enjoy it while it lasts!",
+                        "Sunshine is blessing us today!",
+                        "Perfect weather, no complaints!",
+                        "The sun is doing its thing!",
+                        "Lovely day, make the most of it!",
+                        "Sunshine and clear skies, perfect!",
+                        "Great weather, no rain today!",
+                        "The sun is being cooperative!",
+                        "Beautiful day, soak it up!",
+                        "Sunshine is working overtime!",
+                        "Perfect weather, enjoy it!",
+                        "The sun is shining bright and proud!",
+                        "Lovely day, no rain to ruin it!",
+                        "Sunshine and warmth, finally!",
+                        "Great weather, make it count!",
+                        "The sun is being generous!",
+                        "Beautiful day, no complaints!",
+                        "Sunshine is doing its job well!",
+                        "Perfect weather, no rain!",
+                        "The sun is shining like a star!",
+                        "Lovely day, enjoy the warmth!",
+                        "Sunshine and happiness, perfect!"
                     ] : [
                         "No, it's not raining",
                         "Beautiful sunny day!",
@@ -246,7 +321,47 @@ class WeatherApp {
                         "Lovely sunny weather!",
                         "Clear skies ahead!",
                         "Sunny and warm!",
-                        "Enjoy the sunshine!"
+                        "Enjoy the sunshine!",
+                        "The sun is blessing us today!",
+                        "Perfect day for adventures!",
+                        "Sunshine is nature's gift!",
+                        "Beautiful weather, no rain!",
+                        "The sun is doing its magic!",
+                        "Lovely day for outdoor activities!",
+                        "Sunshine and happiness!",
+                        "Great weather for exploring!",
+                        "The sun is shining with joy!",
+                        "Perfect day for making memories!",
+                        "Sunshine is lighting up the world!",
+                        "Beautiful day for a walk!",
+                        "The sun is being generous!",
+                        "Lovely weather for picnics!",
+                        "Sunshine and clear skies!",
+                        "Great day for gardening!",
+                        "The sun is warming our hearts!",
+                        "Perfect weather for outdoor fun!",
+                        "Sunshine is nature's smile!",
+                        "Beautiful day for relaxation!",
+                        "The sun is shining bright!",
+                        "Lovely day for beach trips!",
+                        "Sunshine and warmth!",
+                        "Great weather for hiking!",
+                        "The sun is blessing the earth!",
+                        "Perfect day for outdoor sports!",
+                        "Sunshine is spreading joy!",
+                        "Beautiful weather for festivals!",
+                        "The sun is doing its best!",
+                        "Lovely day for photography!",
+                        "Sunshine and clear skies!",
+                        "Great weather for road trips!",
+                        "The sun is shining with pride!",
+                        "Perfect day for outdoor dining!",
+                        "Sunshine is nature's energy!",
+                        "Beautiful day for stargazing!",
+                        "The sun is warming the world!",
+                        "Lovely weather for camping!",
+                        "Sunshine and happiness!",
+                        "Great day for outdoor concerts!"
                     ];
                     const randomSunnyMessage = sunnyMessages[Math.floor(Math.random() * sunnyMessages.length)];
                     this.rainStatus.innerHTML = `<span class="text-green-600">${randomSunnyMessage}</span>`;
@@ -351,7 +466,38 @@ class WeatherApp {
                         "Grey as fuck out there, don't bother putting your shoes on!",
                         "The clouds are fucking everywhere",
                         "Heavy cloudiness, how fucking depressing!",
-                        "Dense overcast sky, gloomy!"
+                        "Dense overcast sky, gloomy!",
+                        "The sky is having a grey day, just like my mood",
+                        "Clouds so thick you could cut them with a knife",
+                        "Overcast and underwhelming, typical!",
+                        "The clouds are having a bad hair day",
+                        "Grey sky, grey mood, grey everything",
+                        "The weather is being a real downer",
+                        "Clouds so dense they're blocking the sun's therapy",
+                        "Overcast and over it, just like me",
+                        "The sky is wearing a grey sweater",
+                        "Clouds so thick they're suffocating the sunshine",
+                        "Overcast and underappreciated",
+                        "The weather is having an existential crisis",
+                        "Grey sky, no lie, it's pretty depressing",
+                        "The clouds are having a group therapy session",
+                        "Overcast and overthinking everything",
+                        "The sky is in a grey mood today",
+                        "Clouds so heavy they're weighing down the atmosphere",
+                        "Overcast and over it, just like Monday",
+                        "The weather is being a real buzzkill",
+                        "Grey sky, grey thoughts, grey day",
+                        "The clouds are having a collective bad day",
+                        "Overcast and under the weather",
+                        "The sky is wearing its sad face",
+                        "Clouds so thick they're blocking the good vibes",
+                        "Overcast and overanalyzing everything",
+                        "The weather is having a grey period",
+                        "Grey sky, no high, just low energy",
+                        "The clouds are having a pity party",
+                        "Overcast and overthinking the meaning of life",
+                        "The sky is in a contemplative mood",
+                        "Clouds so dense they're absorbing all the happiness"
                     ] : [
                         "No, it's not raining",
                         "Completely overcast!",
@@ -362,7 +508,48 @@ class WeatherApp {
                         "Solid cloud cover!",
                         "Overcast conditions!",
                         "Heavy cloudiness!",
-                        "Dense overcast sky!"
+                        "Dense overcast sky!",
+                        "The sky is wearing a grey coat today",
+                        "Clouds are having a quiet day",
+                        "Overcast and peaceful",
+                        "The weather is being contemplative",
+                        "Grey sky, but no rain!",
+                        "The clouds are having a rest day",
+                        "Overcast and serene",
+                        "The sky is in a thoughtful mood",
+                        "Clouds are providing gentle shade",
+                        "Overcast but comfortable",
+                        "The weather is being gentle today",
+                        "Grey sky, peaceful vibes",
+                        "The clouds are having a calm day",
+                        "Overcast and cozy",
+                        "The sky is wearing its soft colors",
+                        "Clouds are creating a peaceful atmosphere",
+                        "Overcast and tranquil",
+                        "The weather is being mellow",
+                        "Grey sky, but still beautiful",
+                        "The clouds are having a quiet conversation",
+                        "Overcast and meditative",
+                        "The sky is in a reflective mood",
+                        "Clouds are providing gentle coverage",
+                        "Overcast and harmonious",
+                        "The weather is being contemplative",
+                        "Grey sky, peaceful energy",
+                        "The clouds are having a gentle day",
+                        "Overcast and serene",
+                        "The sky is wearing its softest colors",
+                        "Clouds are creating a peaceful ambiance",
+                        "Overcast and calming",
+                        "The weather is being gentle and kind",
+                        "Grey sky, but full of peace",
+                        "The clouds are having a quiet celebration",
+                        "Overcast and harmonious",
+                        "The sky is in a peaceful mood",
+                        "Clouds are providing gentle protection",
+                        "Overcast and tranquil",
+                        "The weather is being soft and gentle",
+                        "Grey sky, but full of grace",
+                        "The clouds are having a peaceful gathering"
                     ];
                     const randomOvercastMessage = overcastMessages[Math.floor(Math.random() * overcastMessages.length)];
                     this.rainStatus.innerHTML = `<span class="text-gray-600">${randomOvercastMessage}</span>`;
@@ -658,6 +845,13 @@ class WeatherApp {
 
         this.showState('weather-result');
         
+        // Show feedback section for profanity mode messages
+        if (this.profanityMode) {
+            this.showMessageFeedback();
+        } else {
+            this.hideMessageFeedback();
+        }
+        
         // Display weather alerts if present
         if (data.alerts && data.alerts.length > 0) {
             this.displayWeatherAlerts(data.alerts);
@@ -672,6 +866,12 @@ class WeatherApp {
     }
 
     getRainMessages() {
+        // Check for active sponsored messages first
+        const sponsoredMessage = this.getSponsoredMessage('rain');
+        if (sponsoredMessage) {
+            return [sponsoredMessage];
+        }
+
         if (this.profanityMode) {
             return [
                 "Of course it's fucking raining!",
@@ -683,7 +883,38 @@ class WeatherApp {
                 "It's wet and fucking miserable",
                 "There's no such thing as bad weather, except this shitty rain",
                 "Don't bother going outside, it's shite",
-                "Wet and woeful, stay the fuck inside"
+                "Wet and woeful, stay the fuck inside",
+                "Mother Nature's having a piss",
+                "The clouds are literally crying",
+                "It's raining cats and dogs, and they're all wet",
+                "Water falling from the sky like it's the end of the world",
+                "The weather gods are having a laugh at our expense",
+                "Rain, rain, go the fuck away!",
+                "It's wetter than a fish's dream",
+                "The sky is leaking and nobody's fixing it",
+                "Rain so heavy it could drown a duck",
+                "Wet enough to make a duck jealous",
+                "The clouds are having a breakdown",
+                "It's raining harder than my ex's tears",
+                "Water falling faster than my motivation",
+                "The sky is literally crying for help",
+                "Rain so intense it could wash away your problems",
+                "It's wetter than a mermaid's handshake",
+                "The clouds are having a water balloon fight",
+                "Rain so heavy it could fill an ocean",
+                "It's pouring like there's no tomorrow",
+                "The sky is having a water crisis",
+                "Rain so intense it could power a hydroelectric dam",
+                "It's wetter than a sponge in a bathtub",
+                "The clouds are having a meltdown",
+                "Rain so heavy it could flood a desert",
+                "It's pouring like the sky's broken",
+                "The weather is having a water emergency",
+                "Rain so intense it could wash away your sins",
+                "It's wetter than a fish's handshake",
+                "The clouds are having a water party",
+                "Rain so heavy it could fill a swimming pool",
+                "It's pouring like the sky's having a breakdown"
             ];
         } else {
             return [
@@ -696,7 +927,46 @@ class WeatherApp {
                 "Wet weather ahead!",
                 "Raindrops are falling!",
                 "Better stay inside!",
-                "It's a rainy day!"
+                "It's a rainy day!",
+                "The clouds are sharing their tears",
+                "Water is falling from the sky",
+                "It's a perfect day for staying cozy",
+                "The weather is being generous with water",
+                "Rain is blessing the earth",
+                "The sky is watering the plants",
+                "It's a liquid sunshine kind of day",
+                "The clouds are having a water party",
+                "Rain is nature's way of cleaning",
+                "The sky is sharing its refreshment",
+                "It's a wet and wonderful day",
+                "The clouds are giving us a shower",
+                "Rain is falling like confetti",
+                "The sky is being generous today",
+                "It's a perfect day for reading",
+                "The weather is being dramatic",
+                "Rain is nature's music",
+                "The clouds are having a conversation",
+                "It's a liquid blessing from above",
+                "The sky is sharing its emotions",
+                "Rain is falling like magic",
+                "The clouds are having a water show",
+                "It's a perfect day for reflection",
+                "The weather is being expressive",
+                "Rain is nature's way of saying hello",
+                "The sky is sharing its abundance",
+                "It's a wet and wild adventure",
+                "The clouds are having a celebration",
+                "Rain is falling like poetry",
+                "The sky is being creative today",
+                "It's a perfect day for dreaming",
+                "The weather is being artistic",
+                "Rain is nature's way of connecting",
+                "The sky is sharing its wisdom",
+                "It's a liquid love letter from above",
+                "The clouds are having a performance",
+                "Rain is falling like blessings",
+                "The sky is being generous with gifts",
+                "It's a perfect day for gratitude"
             ];
         }
     }
@@ -785,6 +1055,11 @@ class WeatherApp {
             this.detectTemperatureUnitFromLocation();
         }
         this.updateTemperatureUnitDisplay();
+    }
+
+    initializeProfanityToggle() {
+        // Set the profanity toggle to match the loaded state
+        this.profanityToggle.checked = this.profanityMode;
     }
 
     detectTemperatureUnitFromLocation() {
@@ -919,6 +1194,207 @@ class WeatherApp {
             return 'Weather Warning';
         }
     }
+
+    // Message feedback methods
+    showMessageFeedback() {
+        this.messageFeedback.classList.remove('hidden');
+        this.feedbackThanks.classList.add('hidden');
+        
+        // Reset button states
+        this.thumbsUpBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        this.thumbsDownBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        
+        // Show question text and buttons
+        const questionText = this.messageFeedback.querySelector('p');
+        const buttonsContainer = this.messageFeedback.querySelector('.flex.justify-center.space-x-4');
+        
+        if (questionText) questionText.classList.remove('hidden');
+        if (buttonsContainer) buttonsContainer.classList.remove('hidden');
+    }
+
+    hideMessageFeedback() {
+        this.messageFeedback.classList.add('hidden');
+    }
+
+    submitFeedback(type) {
+        // Store feedback data
+        const feedbackData = {
+            type: type,
+            message: this.rainStatus.textContent,
+            profanityMode: this.profanityMode,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent
+        };
+
+        // Store in localStorage for now (could be sent to server later)
+        const existingFeedback = JSON.parse(localStorage.getItem('weatherAppFeedback') || '[]');
+        existingFeedback.push(feedbackData);
+        localStorage.setItem('weatherAppFeedback', JSON.stringify(existingFeedback));
+
+        // Hide the question text and buttons
+        const questionText = this.messageFeedback.querySelector('p');
+        const buttonsContainer = this.messageFeedback.querySelector('.flex.justify-center.space-x-4');
+        
+        if (questionText) questionText.classList.add('hidden');
+        if (buttonsContainer) buttonsContainer.classList.add('hidden');
+        
+        // Show thanks message
+        this.feedbackThanks.classList.remove('hidden');
+
+        // Track with Google Analytics
+        this.trackGoogleAnalytics('message_feedback', {
+            feedback_type: type,
+            profanity_mode: this.profanityMode,
+            message: this.rainStatus.textContent
+        });
+
+        // Log feedback for development
+        console.log('Feedback submitted:', feedbackData);
+        console.log('Total feedback entries:', existingFeedback.length);
+
+        // Hide feedback after 3 seconds
+        setTimeout(() => {
+            this.hideMessageFeedback();
+        }, 3000);
+    }
+
+    // Generate a simple user fingerprint for unique user tracking
+    generateUserFingerprint() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('User fingerprint', 2, 2);
+        
+        const fingerprint = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset(),
+            canvas.toDataURL()
+        ].join('|');
+        
+        // Create a simple hash
+        let hash = 0;
+        for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return Math.abs(hash).toString(36);
+    }
+
+    // Track usage data for admin panel
+    trackUsage(weatherData) {
+        const usageData = {
+            timestamp: new Date().toISOString(),
+            userId: this.generateUserFingerprint(),
+            profanityMode: this.profanityMode,
+            temperatureUnit: this.temperatureUnit,
+            weatherType: this.getWeatherType(weatherData.weatherDescription, weatherData.temperature),
+            isRaining: weatherData.isRaining,
+            temperature: weatherData.temperature,
+            location: weatherData.location,
+            userAgent: navigator.userAgent
+        };
+
+        // Store in localStorage
+        const existingUsage = JSON.parse(localStorage.getItem('weatherAppUsage') || '[]');
+        existingUsage.push(usageData);
+        
+        // Keep only last 1000 entries to prevent localStorage from getting too large
+        if (existingUsage.length > 1000) {
+            existingUsage.splice(0, existingUsage.length - 1000);
+        }
+        
+        localStorage.setItem('weatherAppUsage', JSON.stringify(existingUsage));
+
+        // Track with Google Analytics
+        this.trackGoogleAnalytics('weather_check', {
+            weather_type: usageData.weatherType,
+            is_raining: usageData.isRaining,
+            profanity_mode: usageData.profanityMode,
+            temperature_unit: usageData.temperatureUnit,
+            temperature: usageData.temperature
+        });
+    }
+
+    // Google Analytics tracking helper
+    trackGoogleAnalytics(eventName, parameters = {}) {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, parameters);
+        }
+    }
+
+    // Sponsored messages system
+    getSponsoredMessage(weatherType) {
+        const sponsorships = JSON.parse(localStorage.getItem('weatherAppSponsorships') || '[]');
+        const now = new Date();
+        
+        // Find active sponsorships that match the weather type
+        const activeSponsorships = sponsorships.filter(sponsorship => {
+            const startDate = new Date(sponsorship.startDate);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + sponsorship.duration);
+            return now >= startDate && now <= endDate && 
+                   sponsorship.status === 'active' && 
+                   sponsorship.weatherType === weatherType;
+        });
+        
+        if (activeSponsorships.length === 0) {
+            return null;
+        }
+        
+        // Randomly select from active sponsorships
+        const randomSponsorship = activeSponsorships[Math.floor(Math.random() * activeSponsorships.length)];
+        
+        // Track sponsorship display
+        this.trackGoogleAnalytics('sponsored_message_displayed', {
+            sponsor_name: randomSponsorship.sponsorName,
+            weather_type: weatherType,
+            sponsorship_id: randomSponsorship.id
+        });
+        
+        return {
+            message: randomSponsorship.message,
+            sponsor: randomSponsorship.sponsorName,
+            isSponsored: true
+        };
+    }
+
+    displaySponsoredMessage(messageData) {
+        if (messageData.isSponsored) {
+            // Create sponsored message with special styling
+            const sponsoredHTML = `
+                <div class="sponsored-message bg-gradient-to-r from-yellow-100 to-orange-100 border-l-4 border-yellow-500 p-3 rounded-lg mb-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-800 font-medium">${messageData.message}</p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                <i class="fas fa-heart text-red-500 mr-1"></i>
+                                Sponsored by ${messageData.sponsor}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return sponsoredHTML;
+        }
+        return messageData.message;
+    }
+
+    clearTestSponsoredMessages() {
+        // Clear any test sponsored messages from localStorage
+        const sponsorships = JSON.parse(localStorage.getItem('weatherAppSponsorships') || '[]');
+        const testSponsorships = sponsorships.filter(s => s.id.startsWith('test-'));
+        
+        if (testSponsorships.length > 0) {
+            const realSponsorships = sponsorships.filter(s => !s.id.startsWith('test-'));
+            localStorage.setItem('weatherAppSponsorships', JSON.stringify(realSponsorships));
+            console.log('Cleared test sponsored messages, kept real ones:', realSponsorships.length);
+        }
+    }
+
 }
 
 // Initialize the app when the DOM is loaded

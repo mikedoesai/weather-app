@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rain Check - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-bg {
+            background: #29325F;
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">
+                <i class="fas fa-chart-line mr-4"></i>
+                Rain Check Admin Panel
+            </h1>
+            <p class="text-xl text-white opacity-90">Monitor your weather app's performance</p>
+        </div>
+
+        <!-- Login Section -->
+        <div id="login-section" class="max-w-md mx-auto glass-card rounded-2xl p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Admin Login</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="admin-password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter admin password">
+                </div>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Login
+                </button>
+            </form>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="admin-dashboard" class="hidden">
+            <!-- Metrics Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                <div class="metric-card rounded-xl p-6 text-center">
+                    <i class="fas fa-users text-3xl mb-2"></i>
+                    <h3 class="text-2xl font-bold" id="total-users">0</h3>
+                    <p class="text-sm opacity-90">Unique Users</p>
+                </div>
+                <div class="metric-card rounded-xl p-6 text-center">
+                    <i class="fas fa-cloud-rain text-3xl mb-2"></i>
+                    <h3 class="text-2xl font-bold" id="weather-checks">0</h3>
+                    <p class="text-sm opacity-90">Weather Checks</p>
+                </div>
+                <div class="metric-card rounded-xl p-6 text-center">
+                    <i class="fas fa-thumbs-up text-3xl mb-2"></i>
+                    <h3 class="text-2xl font-bold" id="positive-feedback">0</h3>
+                    <p class="text-sm opacity-90">Positive Feedback</p>
+                </div>
+                <div class="metric-card rounded-xl p-6 text-center">
+                    <i class="fas fa-language text-3xl mb-2"></i>
+                    <h3 class="text-2xl font-bold" id="profanity-usage">0%</h3>
+                    <p class="text-sm opacity-90">Profanity Mode Usage</p>
+                </div>
+                <div class="metric-card rounded-xl p-6 text-center">
+                    <i class="fas fa-dollar-sign text-3xl mb-2"></i>
+                    <h3 class="text-2xl font-bold" id="total-revenue">$0</h3>
+                    <p class="text-sm opacity-90">Total Revenue</p>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Usage Chart -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        Daily Usage
+                    </h3>
+                    <canvas id="usage-chart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Feedback Chart -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-chart-pie mr-2"></i>
+                        Feedback Distribution
+                    </h3>
+                    <canvas id="feedback-chart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Revenue Chart -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        Revenue Over Time
+                    </h3>
+                    <canvas id="revenue-chart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="glass-card rounded-xl p-6 mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-history mr-2"></i>
+                    Recent Activity
+                </h3>
+                <div id="recent-activity" class="space-y-2 max-h-64 overflow-y-auto">
+                    <!-- Activity items will be populated here -->
+                </div>
+            </div>
+
+            <!-- Sponsored Messages Management -->
+            <div class="glass-card rounded-xl p-6 mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-dollar-sign mr-2"></i>
+                    Sponsored Messages
+                </h3>
+                <!-- Pending Approvals -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-4">Pending Approvals</h4>
+                    <div id="pending-sponsorships" class="space-y-3">
+                        <!-- Pending sponsorships will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Active Sponsorships</h4>
+                        <div id="active-sponsorships" class="space-y-2">
+                            <!-- Active sponsorships will be listed here -->
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Add New Sponsorship</h4>
+                        <form id="sponsorship-form" class="space-y-3">
+                            <input type="text" id="sponsor-name" placeholder="Sponsor Name" class="w-full px-3 py-2 border rounded-lg">
+                            <input type="text" id="sponsor-message" placeholder="Custom Message" class="w-full px-3 py-2 border rounded-lg">
+                            <select id="sponsor-weather-type" class="w-full px-3 py-2 border rounded-lg">
+                                <option value="">Select weather type...</option>
+                                <option value="rain">🌧️ Rain</option>
+                                <option value="clear_sky">☀️ Clear Sky</option>
+                                <option value="sunny">☀️ Sunny</option>
+                                <option value="overcast">☁️ Overcast</option>
+                                <option value="few_clouds">⛅ Few Clouds</option>
+                                <option value="broken_clouds">☁️ Broken Clouds</option>
+                                <option value="partly_cloudy">⛅ Partly Cloudy</option>
+                                <option value="foggy">🌫️ Foggy</option>
+                                <option value="dense_fog">🌫️ Dense Fog</option>
+                                <option value="light_snow">❄️ Light Snow</option>
+                                <option value="snowy">❄️ Snowy</option>
+                                <option value="heavy_snow">❄️ Heavy Snow</option>
+                                <option value="freezing">🧊 Freezing</option>
+                                <option value="hot_sunny">🔥 Hot & Sunny</option>
+                                <option value="dusty">💨 Dusty</option>
+                            </select>
+                            <input type="number" id="sponsor-duration" placeholder="Duration (days)" class="w-full px-3 py-2 border rounded-lg">
+                            <input type="number" id="sponsor-amount" placeholder="Amount ($)" class="w-full px-3 py-2 border rounded-lg">
+                            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add Sponsorship
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sponsored Message QA -->
+            <div class="glass-card rounded-xl p-6 mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-eye mr-2"></i>
+                    Sponsored Message QA
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-3">Preview Sponsored Message</h4>
+                        <div class="space-y-3">
+                            <select id="qa-weather-type" class="w-full px-3 py-2 border rounded-lg">
+                                <option value="">Select weather type...</option>
+                                <option value="rain">🌧️ Rain</option>
+                                <option value="clear_sky">☀️ Clear Sky</option>
+                                <option value="sunny">☀️ Sunny</option>
+                                <option value="overcast">☁️ Overcast</option>
+                                <option value="few_clouds">⛅ Few Clouds</option>
+                                <option value="broken_clouds">☁️ Broken Clouds</option>
+                                <option value="partly_cloudy">⛅ Partly Cloudy</option>
+                                <option value="foggy">🌫️ Foggy</option>
+                                <option value="dense_fog">🌫️ Dense Fog</option>
+                                <option value="light_snow">❄️ Light Snow</option>
+                                <option value="snowy">❄️ Snowy</option>
+                                <option value="heavy_snow">❄️ Heavy Snow</option>
+                                <option value="freezing">🧊 Freezing</option>
+                                <option value="hot_sunny">🔥 Hot & Sunny</option>
+                                <option value="dusty">💨 Dusty</option>
+                            </select>
+                            <button id="preview-message" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">
+                                <i class="fas fa-eye mr-2"></i>
+                                Preview Message
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-3">Message Preview</h4>
+                        <div id="message-preview" class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center min-h-[120px] flex items-center justify-center">
+                            <p class="text-gray-500">Select a weather type and click preview to see how the sponsored message will appear</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Data -->
+            <div class="glass-card rounded-xl p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-download mr-2"></i>
+                    Data Export
+                </h3>
+                <div class="flex flex-wrap gap-4">
+                    <button id="export-feedback" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">
+                        <i class="fas fa-download mr-2"></i>
+                        Export Feedback
+                    </button>
+                    <button id="export-usage" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">
+                        <i class="fas fa-download mr-2"></i>
+                        Export Usage Data
+                    </button>
+                    <button id="export-sponsorships" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg">
+                        <i class="fas fa-download mr-2"></i>
+                        Export Sponsorships
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
