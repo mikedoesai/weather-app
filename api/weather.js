@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+// Using built-in fetch (available in Node.js 18+)
 
 // Helper function to get weather description
 const getWeatherDescription = (weatherCode) => {
