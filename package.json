@@ -4,7 +4,7 @@
   "description": "A simple weather app to check if it's raining in your local area",
   "main": "server-simple.js",
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   },
   "scripts": {
     "start": "node server-simple.js",
