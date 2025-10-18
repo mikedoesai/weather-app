@@ -1,5 +1,5 @@
 // Quick test script to verify weather API works
-const fetch = require('node-fetch');
+// Using built-in fetch (available in Node.js 18+)
 
 async function testWeatherAPI() {
   try {
