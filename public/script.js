@@ -1,16 +1,45 @@
-import { WeatherAppDatabase } from './supabase.js';
-import { config, getConfig } from './config.js';
-import { safeSetInnerHTML, validateInput, generateSecureId, rateLimiter } from './utils/security.js';
+console.log('Script.js loading...');
+
+// Import modules with error handling
+let WeatherAppDatabase, config, getConfig, safeSetInnerHTML, validateInput, generateSecureId, rateLimiter;
+
+try {
+    const supabaseModule = await import('./supabase.js');
+    WeatherAppDatabase = supabaseModule.WeatherAppDatabase;
+    console.log('Supabase module loaded successfully');
+} catch (error) {
+    console.error('Failed to load supabase module:', error);
+}
+
+try {
+    const configModule = await import('./config.js');
+    config = configModule.config;
+    getConfig = configModule.getConfig;
+    console.log('Config module loaded successfully');
+} catch (error) {
+    console.error('Failed to load config module:', error);
+}
+
+try {
+    const securityModule = await import('./utils/security.js');
+    safeSetInnerHTML = securityModule.safeSetInnerHTML;
+    validateInput = securityModule.validateInput;
+    generateSecureId = securityModule.generateSecureId;
+    rateLimiter = securityModule.rateLimiter;
+    console.log('Security module loaded successfully');
+} catch (error) {
+    console.error('Failed to load security module:', error);
+}
 
 // Fallback configuration in case import fails
 const fallbackConfig = window.FALLBACK_CONFIG || {
-    openWeatherApiKey: 'YOUR_OPENWEATHER_API_KEY_HERE',
+    openWeatherApiKey: '5fcfc173deb068b3716c14a2d27c8ee3',
     supabase: {
         url: 'https://tzhzfiiwecohdkmxvol.supabase.co',
-        anonKey: 'YOUR_SUPABASE_ANON_KEY_HERE'
+        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6aHpmaXlpd2Vjb2hka214dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTk3MDgsImV4cCI6MjA3NjI3NTcwOH0.KIgVbyEw8DeaZlKBCZie-8qu9v4Bz9UZDTpwV5UeCek'
     },
     admin: {
-        password: 'YOUR_ADMIN_PASSWORD_HERE'
+        password: 'raincheck2024'
     },
     isProduction: false
 };
@@ -23,7 +52,7 @@ class WeatherApp {
         this.profanityMode = localStorage.getItem('weatherAppProfanityMode') === 'true';
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
-        this.openWeatherApiKey = (config || fallbackConfig)?.openWeatherApiKey || 'YOUR_OPENWEATHER_API_KEY_HERE'; // Safe access with fallback
+        this.openWeatherApiKey = (config || fallbackConfig)?.openWeatherApiKey || '5fcfc173deb068b3716c14a2d27c8ee3'; // Safe access with fallback
         this.initializeElements();
         this.bindEvents();
         this.initializeTemperatureUnit();
@@ -1190,9 +1219,13 @@ class WeatherApp {
 
     async getRainMessages() {
         // Check for active sponsored messages first
-        const sponsoredMessage = await this.getSponsoredMessage('rain');
-        if (sponsoredMessage) {
-            return [sponsoredMessage];
+        try {
+            const sponsoredMessage = await this.getSponsoredMessage('rain');
+            if (sponsoredMessage) {
+                return [sponsoredMessage];
+            }
+        } catch (error) {
+            console.warn('Failed to get sponsored rain message:', error);
         }
 
         if (this.profanityMode) {
@@ -1549,8 +1582,12 @@ class WeatherApp {
         };
 
         try {
-            // Store in Supabase
-            await WeatherAppDatabase.addFeedback(feedbackData);
+            // Store in Supabase if available
+            if (WeatherAppDatabase) {
+                await WeatherAppDatabase.addFeedback(feedbackData);
+            } else {
+                throw new Error('WeatherAppDatabase not available');
+            }
         } catch (error) {
             console.error('Error submitting feedback:', error);
             // Fallback to localStorage if Supabase fails
@@ -1631,8 +1668,12 @@ class WeatherApp {
         };
 
         try {
-            // Store in Supabase
-            await WeatherAppDatabase.addUsageData(usageData);
+            // Store in Supabase if available
+            if (WeatherAppDatabase) {
+                await WeatherAppDatabase.addUsageData(usageData);
+            } else {
+                throw new Error('WeatherAppDatabase not available');
+            }
         } catch (error) {
             console.error('Error tracking usage:', error);
             // Fallback to localStorage if Supabase fails
@@ -1675,6 +1716,10 @@ class WeatherApp {
     // Sponsored messages system
     async getSponsoredMessage(weatherType) {
         try {
+            if (!WeatherAppDatabase) {
+                throw new Error('WeatherAppDatabase not available');
+            }
+            
             const sponsorships = await WeatherAppDatabase.getSponsorships();
             const now = new Date();
             

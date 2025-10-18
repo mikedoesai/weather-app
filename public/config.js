@@ -72,9 +72,13 @@ export const getConfig = () => configPromise;
 // This will be updated once the async config loads
 export let config = defaultConfig;
 
+// Make config available globally for debugging
+window.CONFIG_DEBUG = { config, getConfig };
+
 // Update the config object once the async config loads
 configPromise.then(serverConfig => {
     config = serverConfig;
+    window.CONFIG_DEBUG.config = config;
     console.log('Configuration loaded:', { 
         isProduction: config.isProduction,
         hasServerConfig: serverConfig !== defaultConfig 
@@ -85,5 +89,6 @@ configPromise.then(serverConfig => {
     if (window.FALLBACK_CONFIG) {
         console.log('Using global fallback config');
         config = window.FALLBACK_CONFIG;
+        window.CONFIG_DEBUG.config = config;
     }
 });

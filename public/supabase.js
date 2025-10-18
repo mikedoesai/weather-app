@@ -1,15 +1,20 @@
 // Supabase configuration
 import { config, getConfig } from './config.js'
 
+console.log('Supabase.js loading...');
+
 // Wait for Supabase to be available from CDN
 function waitForSupabase() {
     return new Promise((resolve) => {
         if (window.supabase && window.supabase.createClient) {
+            console.log('Supabase CDN already available');
             resolve(window.supabase.createClient);
         } else {
+            console.log('Waiting for Supabase CDN to load...');
             // Wait for CDN to load
             const checkSupabase = () => {
                 if (window.supabase && window.supabase.createClient) {
+                    console.log('Supabase CDN loaded successfully');
                     resolve(window.supabase.createClient);
                 } else {
                     setTimeout(checkSupabase, 100);
