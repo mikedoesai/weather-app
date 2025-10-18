@@ -141,15 +141,18 @@ class WeatherApp {
             return;
         }
 
-        // Check if we're on HTTPS (required for geolocation in production)
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-            this.showError('Geolocation requires HTTPS. Please use a secure connection.');
-            return;
-        }
-
         console.log('Requesting user location...');
         console.log('Protocol:', location.protocol);
         console.log('Hostname:', location.hostname);
+        console.log('Is localhost:', location.hostname === 'localhost');
+        console.log('Is HTTPS:', location.protocol === 'https:');
+
+        // Check if we're on HTTPS (required for geolocation in production)
+        // Only show warning for non-localhost, non-HTTPS connections
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('127.0.0.1')) {
+            console.warn('Geolocation may not work on non-HTTPS connections in production');
+            // Don't block the request, just warn
+        }
 
         try {
             const position = await this.getCurrentPosition();
@@ -164,21 +167,35 @@ class WeatherApp {
             console.error('Location error:', error);
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
+            console.error('Error name:', error.name);
+            console.error('Full error object:', JSON.stringify(error, null, 2));
             this.showError(this.getLocationErrorMessage(error));
         }
     }
 
     getCurrentPosition() {
         return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                timeout: 15000, // Increased timeout for Vercel
-                maximumAge: 300000 // 5 minutes
-            });
+            console.log('Calling navigator.geolocation.getCurrentPosition...');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log('Geolocation success:', position);
+                    resolve(position);
+                },
+                (error) => {
+                    console.log('Geolocation error:', error);
+                    reject(error);
+                },
+                {
+                    enableHighAccuracy: false, // Changed to false for better compatibility
+                    timeout: 10000, // Reduced timeout
+                    maximumAge: 60000 // 1 minute cache
+                }
+            );
         });
     }
 
     getLocationErrorMessage(error) {
+        console.log('Processing error code:', error.code);
         switch (error.code) {
             case error.PERMISSION_DENIED:
                 return 'Location access denied. Please click the location icon in your browser\'s address bar and allow location access, then try again.';
@@ -187,7 +204,7 @@ class WeatherApp {
             case error.TIMEOUT:
                 return 'Location request timed out. Please try again or check your GPS signal.';
             default:
-                return `Location error: ${error.message || 'Unknown error'}. Please try again or use manual location entry.`;
+                return `Location error (Code: ${error.code}): ${error.message || 'Unknown error'}. Please try again or use manual location entry.`;
         }
     }
 
