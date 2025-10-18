@@ -33,7 +33,7 @@ const getWeatherDescription = (weatherCode) => {
   return weatherDescriptions[weatherCode] || 'Unknown weather condition';
 };
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   console.log('Weather API handler called:', req.method, req.url);
   
   // Enable CORS

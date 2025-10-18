@@ -1,4 +1,4 @@
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   console.log('Config API handler called:', req.method, req.url);
   
   // Enable CORS
@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
         anonKey: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6aHpmaXlpd2Vjb2hka214dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTk3MDgsImV4cCI6MjA3NjI3NTcwOH0.KIgVbyEw8DeaZlKBCZie-8qu9v4Bz9UZDTpwV5UeCek'
       },
       admin: {
-        password: process.env.ADMIN_PASSWORD || 'YOUR_ADMIN_PASSWORD_HERE'
+        password: process.env.ADMIN_PASSWORD || 'raincheck2024'
       },
       isProduction: process.env.NODE_ENV === 'production'
     };

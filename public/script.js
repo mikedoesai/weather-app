@@ -18,6 +18,9 @@ try {
     console.log('Config module loaded successfully');
 } catch (error) {
     console.error('Failed to load config module:', error);
+    // Use fallback config if module loading fails
+    config = fallbackConfig;
+    getConfig = () => Promise.resolve(fallbackConfig);
 }
 
 try {
