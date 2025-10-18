@@ -51,42 +51,19 @@ console.log('Script.js loaded with config:', config || fallbackConfig);
 
 class WeatherApp {
     constructor() {
-        console.log('WeatherApp constructor called');
-        
         // Load profanity mode from localStorage or default to false
         this.profanityMode = localStorage.getItem('weatherAppProfanityMode') === 'true';
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
         this.openWeatherApiKey = (config || fallbackConfig)?.openWeatherApiKey || '5fcfc173deb068b3716c14a2d27c8ee3'; // Safe access with fallback
-        
-        console.log('Initializing elements...');
         this.initializeElements();
-        
-        console.log('Binding events...');
         this.bindEvents();
-        
-        console.log('Initializing temperature unit...');
         this.initializeTemperatureUnit();
-        
-        console.log('Initializing profanity toggle...');
         this.initializeProfanityToggle();
-        
-        console.log('Hiding weather warning...');
         this.hideWeatherWarning(); // Ensure banner is hidden on startup
-        
-        console.log('Clearing test sponsored messages...');
         this.clearTestSponsoredMessages(); // Clear any test data
-        
-        console.log('Initializing config...');
         this.initializeConfig();
-        
-        console.log('Initializing production features...');
         this.initializeProductionFeatures(); // Initialize production-specific features
-        
-        // Ensure manual location option is always available
-        this.ensureManualLocationAvailable();
-        
-        console.log('WeatherApp constructor completed');
     }
 
     async initializeConfig() {
@@ -125,44 +102,7 @@ class WeatherApp {
             if (this.toggleManualLocation) {
                 this.toggleManualLocation.textContent = 'Hide manual entry';
             }
-        } else {
-            // For local development, ensure the toggle button is visible and functional
-            if (this.toggleManualLocation) {
-                this.toggleManualLocation.style.display = 'block';
-                this.toggleManualLocation.textContent = 'Can\'t use location? Enter manually';
-            }
         }
-    }
-
-    ensureManualLocationAvailable() {
-        console.log('Ensuring manual location option is available...');
-        
-        // Always ensure the toggle button is visible and functional
-        if (this.toggleManualLocation) {
-            this.toggleManualLocation.style.display = 'block';
-            this.toggleManualLocation.style.visibility = 'visible';
-            console.log('Manual location toggle button is available');
-        } else {
-            console.warn('Manual location toggle button not found');
-        }
-        
-        // Check if we're in a production environment and show manual location by default
-        const isProduction = location.hostname.includes('vercel.app') || location.hostname.includes('netlify.app');
-        if (isProduction && this.manualLocationSection) {
-            this.manualLocationSection.classList.remove('hidden');
-            console.log('Manual location section shown for production environment');
-        }
-        
-        // Add a small delay to ensure DOM is fully ready
-        setTimeout(() => {
-            if (this.toggleManualLocation && this.manualLocationSection) {
-                console.log('Manual location elements verified:', {
-                    toggleButton: !!this.toggleManualLocation,
-                    manualSection: !!this.manualLocationSection,
-                    isHidden: this.manualLocationSection.classList.contains('hidden')
-                });
-            }
-        }, 100);
     }
 
     initializeElements() {
@@ -1895,23 +1835,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <button onclick="location.reload()" class="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm">Refresh</button>
         `;
         document.body.appendChild(errorDiv);
-        
-        // Ensure manual location option is available even if app fails to initialize
-        const manualSection = document.getElementById('manual-location-section');
-        const toggleButton = document.getElementById('toggle-manual-location');
-        if (manualSection && toggleButton) {
-            toggleButton.style.display = 'block';
-            toggleButton.onclick = () => {
-                const isHidden = manualSection.classList.contains('hidden');
-                if (isHidden) {
-                    manualSection.classList.remove('hidden');
-                    toggleButton.textContent = 'Hide manual entry';
-                } else {
-                    manualSection.classList.add('hidden');
-                    toggleButton.textContent = 'Can\'t use location? Enter manually';
-                }
-            };
-        }
     }
 });
 
