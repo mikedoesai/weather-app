@@ -5,8 +5,13 @@
  * Comprehensive code review before GitHub commits to prevent errors
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('🔍 Pre-Commit Code Review\n');
 
@@ -143,7 +148,7 @@ function checkAPIFunction() {
     }
     
     // Check for required dependencies
-    if (!apiContent.includes('require(\'node-fetch\')')) {
+    if (!apiContent.includes('require(\'node-fetch\')') && !apiContent.includes('import.*node-fetch')) {
       logError('API function missing node-fetch dependency');
     } else {
       logSuccess('API function has node-fetch dependency');
