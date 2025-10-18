@@ -14,6 +14,24 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/(.*\\.js)$",
+      "dest": "/public/$1",
+      "headers": {
+        "Content-Type": "application/javascript"
+      }
+    },
+    {
+      "src": "/(.*\\.css)$",
+      "dest": "/public/$1",
+      "headers": {
+        "Content-Type": "text/css"
+      }
+    },
+    {
+      "src": "/(.*\\.(png|jpg|jpeg|gif|ico|svg))$",
+      "dest": "/public/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }

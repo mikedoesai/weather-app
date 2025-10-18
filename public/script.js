@@ -2,13 +2,28 @@ import { WeatherAppDatabase } from './supabase.js';
 import { config, getConfig } from './config.js';
 import { safeSetInnerHTML, validateInput, generateSecureId, rateLimiter } from './utils/security.js';
 
+// Fallback configuration in case import fails
+const fallbackConfig = window.FALLBACK_CONFIG || {
+    openWeatherApiKey: '5fcfc173deb068b3716c14a2d27c8ee3',
+    supabase: {
+        url: 'https://tzhzfiiwecohdkmxvol.supabase.co',
+        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6aHpmaXlpd2Vjb2hka214dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTk3MDgsImV4cCI6MjA3NjI3NTcwOH0.KIgVbyEw8DeaZlKBCZie-8qu9v4Bz9UZDTpwV5UeCek'
+    },
+    admin: {
+        password: 'raincheck2024'
+    },
+    isProduction: false
+};
+
+console.log('Script.js loaded with config:', config || fallbackConfig);
+
 class WeatherApp {
     constructor() {
         // Load profanity mode from localStorage or default to false
         this.profanityMode = localStorage.getItem('weatherAppProfanityMode') === 'true';
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
-        this.openWeatherApiKey = config?.openWeatherApiKey || '5fcfc173deb068b3716c14a2d27c8ee3'; // Safe access with fallback
+        this.openWeatherApiKey = (config || fallbackConfig)?.openWeatherApiKey || '5fcfc173deb068b3716c14a2d27c8ee3'; // Safe access with fallback
         this.initializeElements();
         this.bindEvents();
         this.initializeTemperatureUnit();
