@@ -1,5 +1,5 @@
 import { WeatherAppDatabase } from './supabase.js';
-import { config, getConfig } from './config.example.js';
+import { config, getConfig } from './config.js';
 import { safeSetInnerHTML, validateInput, generateSecureId, rateLimiter } from './utils/security.js';
 
 // Fallback configuration in case import fails

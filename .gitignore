@@ -70,15 +70,8 @@ jspm_packages/
 # TernJS port file
 .tern-port
 
-# Redis dump file
-dump.rdb
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
 
 # OS generated files
 .DS_Store
@@ -89,6 +82,13 @@ dump.rdb
 ehthumbs.db
 Thumbs.db
 
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
 # Temporary files
 *.tmp
 *.temp
@@ -97,7 +97,5 @@ Thumbs.db
 dist/
 build/
 
-# Testing and sensitive files (never commit to GitHub)
-TESTING_GUIDE.md
-public/config.js
-
+# Local development
+.local
