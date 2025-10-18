@@ -8,7 +8,7 @@ class WeatherApp {
         this.profanityMode = localStorage.getItem('weatherAppProfanityMode') === 'true';
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
-        this.openWeatherApiKey = config.openWeatherApiKey;
+        this.openWeatherApiKey = config?.openWeatherApiKey || '5fcfc173deb068b3716c14a2d27c8ee3'; // Safe access with fallback
         this.initializeElements();
         this.bindEvents();
         this.initializeTemperatureUnit();
@@ -39,98 +39,133 @@ class WeatherApp {
     }
 
     initializeElements() {
+        // Helper function to safely get elements
+        const getElement = (id) => {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Element with id '${id}' not found`);
+            }
+            return element;
+        };
+
         // State elements
-        this.initialState = document.getElementById('initial-state');
-        this.loadingState = document.getElementById('loading-state');
-        this.weatherResult = document.getElementById('weather-result');
-        this.errorState = document.getElementById('error-state');
+        this.initialState = getElement('initial-state');
+        this.loadingState = getElement('loading-state');
+        this.weatherResult = getElement('weather-result');
+        this.errorState = getElement('error-state');
 
         // Button elements
-        this.getLocationBtn = document.getElementById('get-location-btn');
-        this.checkAgainBtn = document.getElementById('check-again-btn');
-        this.retryBtn = document.getElementById('retry-btn');
-        this.profanityToggle = document.getElementById('profanity-toggle');
+        this.getLocationBtn = getElement('get-location-btn');
+        this.checkAgainBtn = getElement('check-again-btn');
+        this.retryBtn = getElement('retry-btn');
+        this.profanityToggle = getElement('profanity-toggle');
 
         // Weather display elements
-        this.weatherIcon = document.getElementById('weather-icon');
-        this.rainStatus = document.getElementById('rain-status');
-        this.temperature = document.getElementById('temperature');
-        this.weatherDescription = document.getElementById('weather-description');
-        this.precipitationInfo = document.getElementById('precipitation-info');
-        this.errorMessage = document.getElementById('error-message');
+        this.weatherIcon = getElement('weather-icon');
+        this.rainStatus = getElement('rain-status');
+        this.temperature = getElement('temperature');
+        this.weatherDescription = getElement('weather-description');
+        this.precipitationInfo = getElement('precipitation-info');
+        this.errorMessage = getElement('error-message');
 
         // Temperature unit elements
-        this.temperatureToggle = document.getElementById('temperature-toggle');
-        this.temperatureUnitText = document.getElementById('temperature-unit-text');
+        this.temperatureToggle = getElement('temperature-toggle');
+        this.temperatureUnitText = getElement('temperature-unit-text');
 
         // Weather warning elements
-        this.weatherWarningBanner = document.getElementById('weather-warning-banner');
-        this.warningTitle = document.getElementById('warning-title');
-        this.warningDescription = document.getElementById('warning-description');
+        this.weatherWarningBanner = getElement('weather-warning-banner');
+        this.warningTitle = getElement('warning-title');
+        this.warningDescription = getElement('warning-description');
 
         // Manual location elements
-        this.manualLocationSection = document.getElementById('manual-location-section');
-        this.toggleManualLocation = document.getElementById('toggle-manual-location');
-        this.cityInput = document.getElementById('city-input');
-        this.searchLocationBtn = document.getElementById('search-location-btn');
-        this.locationDisplay = document.getElementById('location-display');
-        this.warningDuration = document.getElementById('warning-duration');
+        this.manualLocationSection = getElement('manual-location-section');
+        this.toggleManualLocation = getElement('toggle-manual-location');
+        this.cityInput = getElement('city-input');
+        this.searchLocationBtn = getElement('search-location-btn');
+        this.locationDisplay = getElement('location-display');
+        this.warningDuration = getElement('warning-duration');
 
         // Feedback elements
-        this.messageFeedback = document.getElementById('message-feedback');
-        this.thumbsUpBtn = document.getElementById('thumbs-up');
-        this.thumbsDownBtn = document.getElementById('thumbs-down');
-        this.feedbackThanks = document.getElementById('feedback-thanks');
+        this.messageFeedback = getElement('message-feedback');
+        this.thumbsUpBtn = getElement('thumbs-up');
+        this.thumbsDownBtn = getElement('thumbs-down');
+        this.feedbackThanks = getElement('feedback-thanks');
     }
 
     bindEvents() {
-        this.getLocationBtn.addEventListener('click', () => this.getUserLocation());
-        this.checkAgainBtn.addEventListener('click', () => this.getUserLocation());
-        this.retryBtn.addEventListener('click', () => this.getUserLocation());
-        this.profanityToggle.addEventListener('change', (e) => {
-            this.profanityMode = e.target.checked;
-            // Save profanity mode state to localStorage
-            localStorage.setItem('weatherAppProfanityMode', this.profanityMode.toString());
-            this.trackGoogleAnalytics('profanity_toggle', {
-                enabled: this.profanityMode
+        // Safely bind events only if elements exist
+        if (this.getLocationBtn) {
+            this.getLocationBtn.addEventListener('click', () => this.getUserLocation());
+        }
+        if (this.checkAgainBtn) {
+            this.checkAgainBtn.addEventListener('click', () => this.getUserLocation());
+        }
+        if (this.retryBtn) {
+            this.retryBtn.addEventListener('click', () => this.getUserLocation());
+        }
+        if (this.profanityToggle) {
+            this.profanityToggle.addEventListener('change', (e) => {
+                this.profanityMode = e.target.checked;
+                // Save profanity mode state to localStorage
+                localStorage.setItem('weatherAppProfanityMode', this.profanityMode.toString());
+                this.trackGoogleAnalytics('profanity_toggle', {
+                    enabled: this.profanityMode
+                });
             });
-        });
-        this.temperatureToggle.addEventListener('change', (e) => {
-            this.temperatureUnit = e.target.checked ? 'fahrenheit' : 'celsius';
-            this.updateTemperatureUnitDisplay();
-            this.saveTemperatureUnitPreference();
-            this.trackGoogleAnalytics('temperature_unit_change', {
-                unit: this.temperatureUnit
+        }
+        if (this.temperatureToggle) {
+            this.temperatureToggle.addEventListener('change', (e) => {
+                this.temperatureUnit = e.target.checked ? 'fahrenheit' : 'celsius';
+                this.updateTemperatureUnitDisplay();
+                this.saveTemperatureUnitPreference();
+                this.trackGoogleAnalytics('temperature_unit_change', {
+                    unit: this.temperatureUnit
+                });
+                // If weather data is already displayed, update it with new unit
+                if (this.weatherResult && !this.weatherResult.classList.contains('hidden') && this.currentTemperatureCelsius !== null) {
+                    this.updateDisplayedTemperature();
+                }
             });
-            // If weather data is already displayed, update it with new unit
-            if (!this.weatherResult.classList.contains('hidden') && this.currentTemperatureCelsius !== null) {
-                this.updateDisplayedTemperature();
-            }
-        });
+        }
         
         // Feedback event listeners
-        this.thumbsUpBtn.addEventListener('click', () => this.submitFeedback('positive'));
-        this.thumbsDownBtn.addEventListener('click', () => this.submitFeedback('negative'));
+        if (this.thumbsUpBtn) {
+            this.thumbsUpBtn.addEventListener('click', () => this.submitFeedback('positive'));
+        }
+        if (this.thumbsDownBtn) {
+            this.thumbsDownBtn.addEventListener('click', () => this.submitFeedback('negative'));
+        }
 
         // Manual location event listeners
-        this.toggleManualLocation.addEventListener('click', () => this.toggleManualLocationInput());
-        this.searchLocationBtn.addEventListener('click', () => this.searchLocationByCity());
-        this.cityInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.searchLocationByCity();
-            }
-        });
+        if (this.toggleManualLocation) {
+            this.toggleManualLocation.addEventListener('click', () => this.toggleManualLocationInput());
+        }
+        if (this.searchLocationBtn) {
+            this.searchLocationBtn.addEventListener('click', () => this.searchLocationByCity());
+        }
+        if (this.cityInput) {
+            this.cityInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.searchLocationByCity();
+                }
+            });
+        }
     }
 
     showState(state) {
-        // Hide all states
-        this.initialState.classList.add('hidden');
-        this.loadingState.classList.add('hidden');
-        this.weatherResult.classList.add('hidden');
-        this.errorState.classList.add('hidden');
+        // Hide all states safely
+        if (this.initialState) this.initialState.classList.add('hidden');
+        if (this.loadingState) this.loadingState.classList.add('hidden');
+        if (this.weatherResult) this.weatherResult.classList.add('hidden');
+        if (this.errorState) this.errorState.classList.add('hidden');
 
         // Show the requested state
-        document.getElementById(state).classList.remove('hidden');
+        const targetElement = document.getElementById(state);
+        if (targetElement) {
+            targetElement.classList.remove('hidden');
+        } else {
+            console.warn(`Element with id '${state}' not found`);
+        }
     }
 
     async getUserLocation() {
