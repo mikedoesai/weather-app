@@ -1,7 +1,10 @@
 import { WeatherAppDatabase } from './supabase.js';
 
+console.log('=== DONATE.JS LOADING ===');
+
 class DonationSystem {
     constructor() {
+        console.log('DonationSystem constructor called');
         this.initializeElements();
         this.bindEvents();
         this.initializeDefaultSelection();
@@ -136,42 +139,33 @@ class DonationSystem {
         // Remove selected class from all packages
         document.querySelectorAll('.package-option').forEach(option => {
             option.classList.remove('selected');
-            console.log('Removed selected class from:', option);
+            option.style.border = '';
+            option.style.backgroundColor = '';
+            option.style.transform = '';
         });
         
         // Add selected class to clicked package
         packageElement.classList.add('selected');
-        console.log('Added selected class to package:', packageElement);
-        console.log('Package classes after selection:', packageElement.className);
+        packageElement.style.border = '3px solid #ff0000';
+        packageElement.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+        packageElement.style.transform = 'translateY(-2px)';
         
         // Update form dropdown
         const duration = packageElement.getAttribute('data-duration');
         const price = packageElement.getAttribute('data-price');
         
-        console.log('Package data:', { duration, price });
-        
         if (this.durationSelect) {
             this.durationSelect.value = duration;
-            console.log('Updated duration select to:', duration);
         }
         
-        this.updatePrice(true); // Skip visual update since we're handling it manually
+        this.updatePrice(true);
         
         // Store the selected package for persistence
         this.selectedPackage = packageElement;
         
-        // Force a re-render to ensure the class is applied
-        packageElement.offsetHeight;
-        
-        // Verify the selection was applied
-        setTimeout(() => {
-            const hasSelected = packageElement.classList.contains('selected');
-            console.log('Verification - package has selected class:', hasSelected);
-            console.log('All package classes:', packageElement.className);
-        }, 100);
-        
-        console.log('Package selection completed');
+        console.log('Package selected:', packageElement.dataset.package);
     }
+
 
     validateForm() {
         const message = this.messageInput.value.trim();
@@ -348,5 +342,14 @@ class DonationSystem {
 
 // Initialize the donation system when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new DonationSystem();
+    console.log('=== DOM CONTENT LOADED ===');
+    console.log('Creating new DonationSystem...');
+    try {
+        new DonationSystem();
+        console.log('DonationSystem created successfully');
+    } catch (error) {
+        console.error('Error creating DonationSystem:', error);
+    }
 });
+
+console.log('=== DONATE.JS SCRIPT LOADED ===');

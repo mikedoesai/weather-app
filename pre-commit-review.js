@@ -121,9 +121,9 @@ function checkAPIFunction() {
   if (fs.existsSync('api/weather.js')) {
     const apiContent = fs.readFileSync('api/weather.js', 'utf8');
     
-    // Check for required exports
-    if (!apiContent.includes('module.exports')) {
-      logError('API function missing module.exports');
+    // Check for required exports (ES modules or CommonJS)
+    if (!apiContent.includes('module.exports') && !apiContent.includes('export default')) {
+      logError('API function missing module.exports or export default');
     } else {
       logSuccess('API function has proper export');
     }
@@ -142,11 +142,11 @@ function checkAPIFunction() {
       logSuccess('API function has error handling');
     }
     
-    // Check for required dependencies
-    if (!apiContent.includes('require(\'node-fetch\')') && !apiContent.includes('import.*node-fetch')) {
-      logError('API function missing node-fetch dependency');
+    // Check for fetch usage (built-in fetch is available in Node.js 18+)
+    if (!apiContent.includes('fetch(') && !apiContent.includes('require(\'node-fetch\')') && !apiContent.includes('import.*node-fetch')) {
+      logWarning('API function may need fetch for HTTP requests');
     } else {
-      logSuccess('API function has node-fetch dependency');
+      logSuccess('API function has fetch capability');
     }
   }
 }
@@ -188,7 +188,7 @@ function checkConfigurationConsistency() {
       const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
       
       // Check for required dependencies
-      const requiredDeps = ['express', 'cors', 'node-fetch'];
+      const requiredDeps = ['express', 'cors'];
       requiredDeps.forEach(dep => {
         if (!packageJson.dependencies || !packageJson.dependencies[dep]) {
           logError(`Missing required dependency: ${dep}`);
@@ -196,6 +196,13 @@ function checkConfigurationConsistency() {
           logSuccess(`Found required dependency: ${dep}`);
         }
       });
+      
+      // Check for Node.js version (should be 22.x for built-in fetch)
+      if (packageJson.engines && packageJson.engines.node) {
+        logSuccess(`Node.js version specified: ${packageJson.engines.node}`);
+      } else {
+        logWarning('Node.js version not specified in engines');
+      }
       
     } catch (error) {
       logError(`package.json is invalid: ${error.message}`);
@@ -277,22 +284,40 @@ function checkFileConsistency() {
 function checkSecurityIssues() {
   console.log('\n7. Checking for security issues...');
   
-  // Check for hardcoded secrets
-  const secretPatterns = [
-    /api[_-]?key/i,
-    /secret/i,
-    /password/i,
-    /token/i
-  ];
-  
+  // Check for hardcoded secrets (but ignore placeholder values)
   const filesToCheck = ['public/script.js', 'api/weather.js'];
   
   filesToCheck.forEach(file => {
     if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, 'utf8');
-      secretPatterns.forEach(pattern => {
-        if (pattern.test(content)) {
-          logWarning(`Potential secret found in ${file}: ${pattern}`);
+      
+      // Check for actual secrets (not placeholders)
+      const actualSecrets = [
+        /['"][a-f0-9]{32,}['"]/i, // 32+ character hex strings (API keys)
+        /['"][A-Za-z0-9+/]{40,}={0,2}['"]/i, // Base64-like tokens
+        /['"][A-Za-z0-9_-]{20,}['"]/i // Long alphanumeric strings
+      ];
+      
+      // Exclude known placeholder patterns
+      const placeholderPatterns = [
+        /YOUR_.*_HERE/i,
+        /your_.*_here/i,
+        /placeholder/i,
+        /example/i,
+        /test/i
+      ];
+      
+      actualSecrets.forEach(pattern => {
+        const matches = content.match(pattern);
+        if (matches) {
+          // Check if it's a placeholder
+          const isPlaceholder = matches.some(match => 
+            placeholderPatterns.some(placeholder => placeholder.test(match))
+          );
+          
+          if (!isPlaceholder) {
+            logWarning(`Potential secret found in ${file}: ${pattern}`);
+          }
         }
       });
     }
