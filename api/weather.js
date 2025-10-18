@@ -69,47 +69,70 @@ export default async function handler(req, res) {
     
     console.log('Weather API URL:', weatherUrl);
     
-    const response = await fetch(weatherUrl);
-    console.log('Weather API response status:', response.status);
+    // Add timeout and better error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
-    const data = await response.json();
-    console.log('Weather API response data:', data);
+    try {
+      const response = await fetch(weatherUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Rain-Check-Weather-App/1.0'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      console.log('Weather API response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Weather API response data received');
+      
+      if (!data || !data.current_weather) {
+        throw new Error('Invalid weather data received from API');
+      }
 
-    if (!response.ok) {
-      console.error('Weather API error:', data);
-      throw new Error(`Weather API error: ${data.reason || 'Unknown error'}`);
+      // Process weather data
+      const currentWeather = data.current_weather;
+      const hourly = data.hourly;
+      
+      const isRaining = currentWeather.weathercode >= 51 && currentWeather.weathercode <= 86;
+      const temperature = Math.round(currentWeather.temperature);
+      const weatherDescription = getWeatherDescription(currentWeather.weathercode);
+      
+      // Get precipitation for next few hours
+      const precipitation = hourly.precipitation.slice(0, 6).reduce((sum, val) => sum + val, 0);
+
+      const result = {
+        isRaining,
+        temperature,
+        weatherDescription,
+        precipitation: Math.round(precipitation * 10) / 10,
+        location: {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude)
+        },
+        cached: false,
+        responseTime: `${Date.now() - Date.now()}ms`
+      };
+
+      console.log('Weather data processed:', result);
+      return res.json(result);
+      
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Weather API request timed out');
+      }
+      throw fetchError;
     }
-
-    // Process weather data
-    const currentWeather = data.current_weather;
-    const hourly = data.hourly;
-    
-    const isRaining = currentWeather.weathercode >= 51 && currentWeather.weathercode <= 86;
-    const temperature = Math.round(currentWeather.temperature);
-    const weatherDescription = getWeatherDescription(currentWeather.weathercode);
-    
-    // Get precipitation for next few hours
-    const precipitation = hourly.precipitation.slice(0, 6).reduce((sum, val) => sum + val, 0);
-
-    const result = {
-      isRaining,
-      temperature,
-      weatherDescription,
-      precipitation: Math.round(precipitation * 10) / 10,
-      location: {
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude)
-      },
-      cached: false,
-      responseTime: `${Date.now() - Date.now()}ms`
-    };
-
-    console.log('Weather data processed:', result);
-    res.json(result);
 
   } catch (error) {
     console.error('Weather API Error:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Failed to fetch weather data',
       details: error.message 
     });

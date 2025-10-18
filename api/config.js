@@ -28,10 +28,10 @@ export default async function handler(req, res) {
     };
 
     console.log('Config endpoint called, returning config for production');
-    res.json(config);
+    return res.json(config);
   } catch (error) {
     console.error('Config API Error:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Failed to fetch configuration',
       details: error.message 
     });

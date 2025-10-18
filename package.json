@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A simple weather app to check if it's raining in your local area",
   "main": "server-simple.js",
-  "type": "module",
   "engines": {
     "node": "22.x"
   },
