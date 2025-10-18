@@ -1,21 +1,59 @@
 // Supabase configuration
 import { config, getConfig } from './config.js'
 
-// Use Supabase from CDN (loaded in HTML)
-const { createClient } = window.supabase;
+// Wait for Supabase to be available from CDN
+function waitForSupabase() {
+    return new Promise((resolve) => {
+        if (window.supabase && window.supabase.createClient) {
+            resolve(window.supabase.createClient);
+        } else {
+            // Wait for CDN to load
+            const checkSupabase = () => {
+                if (window.supabase && window.supabase.createClient) {
+                    resolve(window.supabase.createClient);
+                } else {
+                    setTimeout(checkSupabase, 100);
+                }
+            };
+            checkSupabase();
+        }
+    });
+}
 
-// Create supabase client with default config initially
-let supabase = createClient(config.supabase.url, config.supabase.anonKey);
+// Initialize Supabase client
+let supabase = null;
+let createClient = null;
 
-// Update supabase client when server config loads
-getConfig().then(serverConfig => {
-    if (serverConfig.supabase.url !== config.supabase.url || serverConfig.supabase.anonKey !== config.supabase.anonKey) {
-        console.log('Updating Supabase client with server config');
-        supabase = createClient(serverConfig.supabase.url, serverConfig.supabase.anonKey);
+async function initializeSupabase() {
+    try {
+        createClient = await waitForSupabase();
+        console.log('Supabase CDN loaded, creating client');
+        
+        // Create client with default config initially
+        supabase = createClient(config.supabase.url, config.supabase.anonKey);
+        
+        // Update supabase client when server config loads
+        try {
+            const serverConfig = await getConfig();
+            if (serverConfig.supabase.url !== config.supabase.url || serverConfig.supabase.anonKey !== config.supabase.anonKey) {
+                console.log('Updating Supabase client with server config');
+                supabase = createClient(serverConfig.supabase.url, serverConfig.supabase.anonKey);
+            }
+        } catch (error) {
+            console.warn('Failed to update Supabase client, using default config:', error);
+        }
+    } catch (error) {
+        console.error('Failed to initialize Supabase:', error);
+        // Create a mock client to prevent errors
+        supabase = {
+            from: () => ({ select: () => ({ order: () => ({ data: [], error: null }) }) }),
+            auth: { getUser: () => ({ data: { user: null }, error: null }) }
+        };
     }
-}).catch(error => {
-    console.warn('Failed to update Supabase client, using default config:', error);
-});
+}
+
+// Initialize immediately
+initializeSupabase();
 
 export { supabase };
 

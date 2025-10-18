@@ -8,52 +8,66 @@ class DonationSystem {
     }
 
     initializeElements() {
-        this.donationForm = document.getElementById('donation-form');
-        this.messageInput = document.getElementById('message-input');
-        this.sponsorNameInput = document.getElementById('sponsor-name-input');
-        this.weatherTypeSelect = document.getElementById('weather-type');
-        this.durationSelect = document.getElementById('sponsorship-duration');
-        this.charCount = document.getElementById('char-count');
-        this.priceDisplay = document.getElementById('price-display');
-        this.totalPrice = document.getElementById('total-price');
-        this.donateButton = document.getElementById('donate-button');
-        this.successMessage = document.getElementById('success-message');
+        // Helper function to safely get elements
+        const getElement = (id) => {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Element with id '${id}' not found`);
+            }
+            return element;
+        };
+
+        this.donationForm = getElement('donation-form');
+        this.messageInput = getElement('message-input');
+        this.sponsorNameInput = getElement('sponsor-name-input');
+        this.weatherTypeSelect = getElement('weather-type');
+        this.durationSelect = getElement('sponsorship-duration');
+        this.charCount = getElement('char-count');
+        this.priceDisplay = getElement('price-display');
+        this.totalPrice = getElement('total-price');
+        this.donateButton = getElement('donate-button');
+        this.successMessage = getElement('success-message');
+        
+        console.log('Donation system elements initialized');
     }
 
     bindEvents() {
         // Character count for message input
-        this.messageInput.addEventListener('input', () => this.updateCharCount());
+        if (this.messageInput) {
+            this.messageInput.addEventListener('input', () => this.updateCharCount());
+        }
         
         // Duration selection
-        this.durationSelect.addEventListener('change', () => this.updatePrice());
+        if (this.durationSelect) {
+            this.durationSelect.addEventListener('change', () => this.updatePrice());
+        }
         
-        // Package selection - use both direct and delegated events for reliability
-        const packageOptions = document.querySelectorAll('.package-option');
-        
-        packageOptions.forEach((option) => {
-            option.addEventListener('click', (e) => {
+        // Package selection - use event delegation for reliability
+        document.addEventListener('click', (e) => {
+            const packageElement = e.target.closest('.package-option');
+            if (packageElement) {
                 e.preventDefault();
                 e.stopPropagation();
-                this.selectPackage(option);
-            });
-        });
-        
-        // Also use event delegation as backup
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.package-option')) {
-                const packageElement = e.target.closest('.package-option');
+                console.log('Package clicked:', packageElement);
                 this.selectPackage(packageElement);
             }
         });
         
         // Form submission
-        this.donationForm.addEventListener('submit', (e) => this.handleSubmit(e));
+        if (this.donationForm) {
+            this.donationForm.addEventListener('submit', (e) => this.handleSubmit(e));
+        }
+        
+        console.log('Donation system events bound');
     }
     
     initializeDefaultSelection() {
         // No auto-selection - let user choose
         // Just ensure price display is hidden initially
-        this.priceDisplay.classList.add('hidden');
+        if (this.priceDisplay) {
+            this.priceDisplay.classList.add('hidden');
+        }
+        console.log('Default selection initialized');
     }
 
     updateCharCount() {
@@ -103,6 +117,8 @@ class DonationSystem {
     }
 
     selectPackage(packageElement) {
+        console.log('selectPackage called with:', packageElement);
+        
         // Remove selected class from all packages
         document.querySelectorAll('.package-option').forEach(option => {
             option.classList.remove('selected');
@@ -110,12 +126,19 @@ class DonationSystem {
         
         // Add selected class to clicked package
         packageElement.classList.add('selected');
+        console.log('Added selected class to package');
         
         // Update form dropdown
         const duration = packageElement.getAttribute('data-duration');
         const price = packageElement.getAttribute('data-price');
         
-        this.durationSelect.value = duration;
+        console.log('Package data:', { duration, price });
+        
+        if (this.durationSelect) {
+            this.durationSelect.value = duration;
+            console.log('Updated duration select to:', duration);
+        }
+        
         this.updatePrice(true); // Skip visual update since we're handling it manually
         
         // Store the selected package for persistence
@@ -123,6 +146,8 @@ class DonationSystem {
         
         // Force a re-render to ensure the class is applied
         packageElement.offsetHeight;
+        
+        console.log('Package selection completed');
     }
 
     validateForm() {

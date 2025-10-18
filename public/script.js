@@ -16,6 +16,7 @@ class WeatherApp {
         this.hideWeatherWarning(); // Ensure banner is hidden on startup
         this.clearTestSponsoredMessages(); // Clear any test data
         this.initializeConfig();
+        this.initializeProductionFeatures(); // Initialize production-specific features
     }
 
     async initializeConfig() {
@@ -34,6 +35,25 @@ class WeatherApp {
             if (!this.openWeatherApiKey) {
                 this.openWeatherApiKey = '5fcfc173deb068b3716c14a2d27c8ee3';
                 console.log('Using fallback API key');
+            }
+        }
+    }
+
+    initializeProductionFeatures() {
+        // Check if we're on a production domain
+        const isProduction = location.hostname.includes('vercel.app') || location.hostname.includes('netlify.app');
+        
+        if (isProduction) {
+            console.log('Production environment detected, initializing production features');
+            
+            // Show manual location option by default on production
+            if (this.manualLocationSection) {
+                this.manualLocationSection.classList.remove('hidden');
+            }
+            
+            // Update the toggle button text
+            if (this.toggleManualLocation) {
+                this.toggleManualLocation.textContent = 'Hide manual entry';
             }
         }
     }
@@ -171,8 +191,18 @@ class WeatherApp {
     async getUserLocation() {
         this.showState('loading-state');
 
+        // CRITICAL: Always show manual location option on production
+        const isProduction = location.hostname.includes('vercel.app') || location.hostname.includes('netlify.app');
+        if (isProduction && this.manualLocationSection) {
+            this.manualLocationSection.classList.remove('hidden');
+        }
+
         if (!navigator.geolocation) {
-            this.showError('Geolocation is not supported by this browser.');
+            console.warn('Geolocation not supported, showing manual location option');
+            if (this.manualLocationSection) {
+                this.manualLocationSection.classList.remove('hidden');
+            }
+            this.showError('Geolocation is not supported by this browser. Please use the manual location entry below.');
             return;
         }
 
@@ -181,29 +211,38 @@ class WeatherApp {
         console.log('Hostname:', location.hostname);
         console.log('Is localhost:', location.hostname === 'localhost');
         console.log('Is HTTPS:', location.protocol === 'https:');
+        console.log('Is Production:', isProduction);
+        console.log('User Agent:', navigator.userAgent);
 
         // Check if we're on HTTPS (required for geolocation in production)
-        // Only show warning for non-localhost, non-HTTPS connections
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('127.0.0.1')) {
+        if (location.protocol !== 'https:' && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
             console.warn('Geolocation may not work on non-HTTPS connections in production');
-            // Don't block the request, just warn
+            if (this.manualLocationSection) {
+                this.manualLocationSection.classList.remove('hidden');
+            }
         }
 
         try {
             const position = await this.getCurrentPosition();
             const { latitude, longitude } = position.coords;
-            console.log('Location obtained:', { latitude, longitude });
+            console.log('Location obtained successfully:', { latitude, longitude });
             
             // Clear manual city name when using GPS
             this.currentCityName = null;
             
             await this.fetchWeatherData(latitude, longitude);
         } catch (error) {
-            console.error('Location error:', error);
+            console.error('Geolocation failed:', error);
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
             console.error('Error name:', error.name);
-            console.error('Full error object:', JSON.stringify(error, null, 2));
+            
+            // CRITICAL: Always show manual location option on any geolocation error
+            if (this.manualLocationSection) {
+                this.manualLocationSection.classList.remove('hidden');
+            }
+            
+            // Show user-friendly error with manual option
             this.showError(this.getLocationErrorMessage(error));
         }
     }
@@ -211,36 +250,66 @@ class WeatherApp {
     getCurrentPosition() {
         return new Promise((resolve, reject) => {
             console.log('Calling navigator.geolocation.getCurrentPosition...');
+            
+            // Different options for production vs development
+            const isProduction = location.hostname.includes('vercel.app') || location.hostname.includes('netlify.app');
+            
+            // More aggressive options for production to ensure success
+            const options = {
+                enableHighAccuracy: false, // Better compatibility
+                timeout: isProduction ? 20000 : 10000, // Even longer timeout for production
+                maximumAge: isProduction ? 600000 : 60000 // 10 minutes cache for production, 1 minute for dev
+            };
+            
+            console.log('Geolocation options:', options);
+            
+            // Set up a backup timeout to prevent hanging
+            const backupTimeout = setTimeout(() => {
+                console.warn('Geolocation backup timeout triggered');
+                reject(new Error('Geolocation request timed out'));
+            }, options.timeout + 5000); // 5 seconds after the main timeout
+            
             navigator.geolocation.getCurrentPosition(
                 (position) => {
+                    clearTimeout(backupTimeout);
                     console.log('Geolocation success:', position);
                     resolve(position);
                 },
                 (error) => {
+                    clearTimeout(backupTimeout);
                     console.log('Geolocation error:', error);
                     reject(error);
                 },
-                {
-                    enableHighAccuracy: false, // Changed to false for better compatibility
-                    timeout: 10000, // Reduced timeout
-                    maximumAge: 60000 // 1 minute cache
-                }
+                options
             );
         });
     }
 
     getLocationErrorMessage(error) {
         console.log('Processing error code:', error.code);
+        const isProduction = location.hostname.includes('vercel.app') || location.hostname.includes('netlify.app');
+        
+        let message = '';
         switch (error.code) {
             case error.PERMISSION_DENIED:
-                return 'Location access denied. Please click the location icon in your browser\'s address bar and allow location access, then try again.';
+                message = 'Location access denied. Please allow location access in your browser settings, or use the manual location entry below.';
+                break;
             case error.POSITION_UNAVAILABLE:
-                return 'Location information is unavailable. Please check your internet connection and GPS settings, then try again.';
+                message = 'Location information is unavailable. Please check your internet connection and GPS settings, or use the manual location entry below.';
+                break;
             case error.TIMEOUT:
-                return 'Location request timed out. Please try again or check your GPS signal.';
+                message = 'Location request timed out. Please try again or use the manual location entry below.';
+                break;
             default:
-                return `Location error (Code: ${error.code}): ${error.message || 'Unknown error'}. Please try again or use manual location entry.`;
+                message = `Location error: ${error.message || 'Unknown error'}. Please use the manual location entry below.`;
         }
+        
+        // Always mention manual location option
+        if (!message.includes('manual location entry')) {
+            message += ' You can use the manual location entry below instead.';
+        }
+        
+        return message;
     }
 
     toggleManualLocationInput() {
@@ -269,18 +338,34 @@ class WeatherApp {
             // Use OpenWeatherMap Geocoding API to get coordinates
             const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${this.openWeatherApiKey}`;
             
-            const response = await fetch(geocodeUrl);
+            console.log('Geocoding URL:', geocodeUrl);
+            
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            const response = await fetch(geocodeUrl, { 
+                signal: controller.signal,
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            clearTimeout(timeoutId);
+            
             if (!response.ok) {
-                throw new Error(`Geocoding API error: ${response.status}`);
+                throw new Error(`Geocoding API error: ${response.status} ${response.statusText}`);
             }
             
             const data = await response.json();
+            console.log('Geocoding response:', data);
+            
             if (!data || data.length === 0) {
-                throw new Error('City not found. Please try a different city name.');
+                throw new Error('City not found. Please try a different city name or check the spelling.');
             }
 
             const { lat: latitude, lon: longitude, name, country } = data[0];
-            console.log('City found:', { name, country, latitude, longitude });
+            console.log('City found successfully:', { name, country, latitude, longitude });
             
             // Store the city name for display
             this.currentCityName = `${name}, ${country}`;
@@ -288,7 +373,17 @@ class WeatherApp {
             await this.fetchWeatherData(latitude, longitude);
         } catch (error) {
             console.error('City search error:', error);
-            this.showError(`Failed to find city: ${error.message}`);
+            
+            let errorMessage = 'Failed to find city. ';
+            if (error.name === 'AbortError') {
+                errorMessage += 'Request timed out. Please check your internet connection and try again.';
+            } else if (error.message.includes('API error')) {
+                errorMessage += 'Service temporarily unavailable. Please try again in a moment.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            this.showError(errorMessage);
         }
     }
 
@@ -302,13 +397,20 @@ class WeatherApp {
             
             console.log('API URL:', apiUrl);
             
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+            
             const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                mode: 'cors'
+                mode: 'cors',
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             console.log('Response status:', response.status);
             console.log('Response headers:', response.headers);
@@ -320,7 +422,7 @@ class WeatherApp {
             }
             
             const data = await response.json();
-            console.log('Weather data received:', data);
+            console.log('Weather data received successfully:', data);
 
             // Fetch weather alerts from OpenWeatherMap
             const alerts = await this.fetchWeatherAlerts(latitude, longitude);
@@ -329,7 +431,24 @@ class WeatherApp {
             await this.displayWeatherData(data);
         } catch (error) {
             console.error('Weather API error:', error);
-            this.showError(`Failed to fetch weather data: ${error.message}. Please try again later.`);
+            
+            let errorMessage = 'Failed to fetch weather data. ';
+            if (error.name === 'AbortError') {
+                errorMessage += 'Request timed out. Please check your internet connection and try again.';
+            } else if (error.message.includes('HTTP 5')) {
+                errorMessage += 'Server error. Please try again in a moment.';
+            } else if (error.message.includes('HTTP 4')) {
+                errorMessage += 'Invalid request. Please try again.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            // Always show manual location option on weather API failure
+            if (this.manualLocationSection) {
+                this.manualLocationSection.classList.remove('hidden');
+            }
+            
+            this.showError(errorMessage);
         }
     }
 
@@ -1626,7 +1745,21 @@ class WeatherApp {
 
 // Initialize the app when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new WeatherApp();
+    console.log('DOM loaded, initializing WeatherApp...');
+    try {
+        new WeatherApp();
+        console.log('WeatherApp initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize WeatherApp:', error);
+        // Show a fallback error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fixed top-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
+        errorDiv.innerHTML = `
+            <strong>App Error:</strong> Failed to initialize. Please refresh the page or try again later.
+            <button onclick="location.reload()" class="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm">Refresh</button>
+        `;
+        document.body.appendChild(errorDiv);
+    }
 });
 
 // Trigger new deployment - temperature toggle fix applied
