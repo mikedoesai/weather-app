@@ -236,6 +236,14 @@ class WeatherApp {
                 this.manualLocationSection.classList.remove('hidden');
             }
         }
+        
+        // For Vercel deployments, always show manual location option as fallback
+        if (location.hostname.includes('vercel.app')) {
+            console.log('Vercel deployment detected, ensuring manual location option is available');
+            if (this.manualLocationSection) {
+                this.manualLocationSection.classList.remove('hidden');
+            }
+        }
 
         try {
             const position = await this.getCurrentPosition();
@@ -272,7 +280,7 @@ class WeatherApp {
             // More aggressive options for production to ensure success
             const options = {
                 enableHighAccuracy: false, // Better compatibility
-                timeout: isProduction ? 20000 : 10000, // Even longer timeout for production
+                timeout: isProduction ? 30000 : 10000, // 30 seconds for production, 10 for dev
                 maximumAge: isProduction ? 600000 : 60000 // 10 minutes cache for production, 1 minute for dev
             };
             
@@ -313,10 +321,15 @@ class WeatherApp {
                 message = 'Location information is unavailable. Please check your internet connection and GPS settings, or use the manual location entry below.';
                 break;
             case error.TIMEOUT:
-                message = 'Location request timed out. Please try again or use the manual location entry below.';
+                message = 'Location request timed out. This is common on slower connections. Please try again or use the manual location entry below.';
                 break;
             default:
                 message = `Location error: ${error.message || 'Unknown error'}. Please use the manual location entry below.`;
+        }
+        
+        // Add specific message for Vercel deployments
+        if (location.hostname.includes('vercel.app')) {
+            message += ' Note: Geolocation works best on HTTPS connections.';
         }
         
         // Always mention manual location option
