@@ -1,13 +1,17 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
   "functions": {
     "api/weather.js": {
-      "maxDuration": 30,
-      "runtime": "nodejs22.x"
+      "maxDuration": 30
     },
     "api/config.js": {
-      "maxDuration": 10,
-      "runtime": "nodejs22.x"
+      "maxDuration": 10
     }
   },
   "routes": [
