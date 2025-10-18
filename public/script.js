@@ -67,6 +67,13 @@ class WeatherApp {
         this.weatherWarningBanner = document.getElementById('weather-warning-banner');
         this.warningTitle = document.getElementById('warning-title');
         this.warningDescription = document.getElementById('warning-description');
+
+        // Manual location elements
+        this.manualLocationSection = document.getElementById('manual-location-section');
+        this.toggleManualLocation = document.getElementById('toggle-manual-location');
+        this.cityInput = document.getElementById('city-input');
+        this.searchLocationBtn = document.getElementById('search-location-btn');
+        this.locationDisplay = document.getElementById('location-display');
         this.warningDuration = document.getElementById('warning-duration');
 
         // Feedback elements
@@ -104,6 +111,15 @@ class WeatherApp {
         // Feedback event listeners
         this.thumbsUpBtn.addEventListener('click', () => this.submitFeedback('positive'));
         this.thumbsDownBtn.addEventListener('click', () => this.submitFeedback('negative'));
+
+        // Manual location event listeners
+        this.toggleManualLocation.addEventListener('click', () => this.toggleManualLocationInput());
+        this.searchLocationBtn.addEventListener('click', () => this.searchLocationByCity());
+        this.cityInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.searchLocationByCity();
+            }
+        });
     }
 
     showState(state) {
@@ -125,12 +141,29 @@ class WeatherApp {
             return;
         }
 
+        // Check if we're on HTTPS (required for geolocation in production)
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+            this.showError('Geolocation requires HTTPS. Please use a secure connection.');
+            return;
+        }
+
+        console.log('Requesting user location...');
+        console.log('Protocol:', location.protocol);
+        console.log('Hostname:', location.hostname);
+
         try {
             const position = await this.getCurrentPosition();
             const { latitude, longitude } = position.coords;
+            console.log('Location obtained:', { latitude, longitude });
+            
+            // Clear manual city name when using GPS
+            this.currentCityName = null;
+            
             await this.fetchWeatherData(latitude, longitude);
         } catch (error) {
             console.error('Location error:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
             this.showError(this.getLocationErrorMessage(error));
         }
     }
@@ -148,13 +181,62 @@ class WeatherApp {
     getLocationErrorMessage(error) {
         switch (error.code) {
             case error.PERMISSION_DENIED:
-                return 'Location access denied. Please allow location access and try again.';
+                return 'Location access denied. Please click the location icon in your browser\'s address bar and allow location access, then try again.';
             case error.POSITION_UNAVAILABLE:
-                return 'Location information is unavailable. Please check your connection.';
+                return 'Location information is unavailable. Please check your internet connection and GPS settings, then try again.';
             case error.TIMEOUT:
-                return 'Location request timed out. Please try again.';
+                return 'Location request timed out. Please try again or check your GPS signal.';
             default:
-                return 'An unknown error occurred while getting your location.';
+                return `Location error: ${error.message || 'Unknown error'}. Please try again or use manual location entry.`;
+        }
+    }
+
+    toggleManualLocationInput() {
+        const isHidden = this.manualLocationSection.classList.contains('hidden');
+        if (isHidden) {
+            this.manualLocationSection.classList.remove('hidden');
+            this.toggleManualLocation.textContent = 'Hide manual entry';
+            this.cityInput.focus();
+        } else {
+            this.manualLocationSection.classList.add('hidden');
+            this.toggleManualLocation.textContent = 'Can\'t use location? Enter manually';
+        }
+    }
+
+    async searchLocationByCity() {
+        const city = this.cityInput.value.trim();
+        if (!city) {
+            this.showError('Please enter a city name.');
+            return;
+        }
+
+        this.showState('loading-state');
+        console.log('Searching for city:', city);
+
+        try {
+            // Use OpenWeatherMap Geocoding API to get coordinates
+            const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${this.openWeatherApiKey}`;
+            
+            const response = await fetch(geocodeUrl);
+            if (!response.ok) {
+                throw new Error(`Geocoding API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (!data || data.length === 0) {
+                throw new Error('City not found. Please try a different city name.');
+            }
+
+            const { lat: latitude, lon: longitude, name, country } = data[0];
+            console.log('City found:', { name, country, latitude, longitude });
+            
+            // Store the city name for display
+            this.currentCityName = `${name}, ${country}`;
+            
+            await this.fetchWeatherData(latitude, longitude);
+        } catch (error) {
+            console.error('City search error:', error);
+            this.showError(`Failed to find city: ${error.message}`);
         }
     }
 
@@ -220,6 +302,15 @@ class WeatherApp {
             const convertedTemp = this.convertTemperature(temperature);
             this.temperature.innerHTML = `${convertedTemp}${this.getTemperatureUnitSymbol()}`;
             this.weatherDescription.textContent = weatherDescription;
+            
+            // Show location if using manual entry
+            if (this.currentCityName) {
+                this.locationDisplay.textContent = `📍 ${this.currentCityName}`;
+                this.locationDisplay.classList.remove('hidden');
+            } else {
+                this.locationDisplay.classList.add('hidden');
+            }
+            
             this.precipitationInfo.innerHTML = `
                 <i class="fas fa-tint mr-1"></i>
                 No precipitation
@@ -854,6 +945,14 @@ class WeatherApp {
 
         // Set weather description
         this.weatherDescription.textContent = weatherDescription;
+
+        // Show location if using manual entry
+        if (this.currentCityName) {
+            this.locationDisplay.textContent = `📍 ${this.currentCityName}`;
+            this.locationDisplay.classList.remove('hidden');
+        } else {
+            this.locationDisplay.classList.add('hidden');
+        }
 
         // Set precipitation info
         if (precipitation > 0) {

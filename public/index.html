@@ -75,6 +75,22 @@
                         <i class="fas fa-location-arrow mr-2"></i>
                         Get My Location
                     </button>
+                    
+                    <!-- Manual Location Input (Hidden by default) -->
+                    <div id="manual-location-section" class="hidden mt-4 space-y-3">
+                        <p class="text-sm text-gray-600">Or enter your location manually:</p>
+                        <div class="flex space-x-2">
+                            <input type="text" id="city-input" placeholder="City, Country" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button id="search-location-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-300">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Toggle Manual Location -->
+                    <button id="toggle-manual-location" class="text-sm text-blue-600 hover:text-blue-800 underline mt-2">
+                        Can't use location? Enter manually
+                    </button>
                 </div>
 
                 <!-- Loading State -->
@@ -92,6 +108,7 @@
                     <div id="rain-status" class="text-3xl font-bold mb-2"></div>
                     <div id="temperature" class="text-2xl text-gray-600 mb-2"></div>
                     <div id="weather-description" class="text-lg text-gray-500 mb-4"></div>
+                    <div id="location-display" class="text-sm text-gray-400 mb-4 hidden"></div>
                     <div id="precipitation-info" class="text-sm text-gray-400 mb-4"></div>
                     
                     <!-- Message Feedback Section -->
