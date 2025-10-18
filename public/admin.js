@@ -1,5 +1,5 @@
 import { WeatherAppDatabase } from './supabase.js';
-import { config, getConfig } from './config.js';
+import { config, getConfig } from './config.example.js';
 import { safeSetInnerHTML, validateInput } from './utils/security.js';
 
 class AdminPanel {

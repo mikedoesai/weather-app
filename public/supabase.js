@@ -1,5 +1,5 @@
 // Supabase configuration
-import { config, getConfig } from './config.js'
+import { config, getConfig } from './config.example.js'
 
 // Wait for Supabase to be available from CDN
 function waitForSupabase() {

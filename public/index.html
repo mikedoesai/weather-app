@@ -27,23 +27,6 @@
             // GA not implemented yet - silent no-op
         };
     </script>
-    
-    <!-- Fallback configuration in case modules fail to load -->
-    <script>
-        // Global fallback configuration
-        window.FALLBACK_CONFIG = {
-            openWeatherApiKey: '5fcfc173deb068b3716c14a2d27c8ee3',
-            supabase: {
-                url: 'https://tzhzfiiwecohdkmxvol.supabase.co',
-                anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6aHpmaXlpd2Vjb2hka214dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTk3MDgsImV4cCI6MjA3NjI3NTcwOH0.KIgVbyEw8DeaZlKBCZie-8qu9v4Bz9UZDTpwV5UeCek'
-            },
-            admin: {
-                password: 'raincheck2024'
-            },
-            isProduction: false
-        };
-        console.log('Fallback config loaded globally');
-    </script>
     <style>
         .gradient-bg {
             background: #29325F;
@@ -220,50 +203,10 @@
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Load modules with error handling -->
-    <script type="module">
-        // Load modules with fallback error handling
-        async function loadModule(src, fallback = null) {
-            try {
-                const module = await import(src);
-                console.log(`Module loaded successfully: ${src}`);
-                return module;
-            } catch (error) {
-                console.error(`Failed to load module ${src}:`, error);
-                if (fallback) {
-                    console.log(`Using fallback for ${src}`);
-                    return fallback;
-                }
-                throw error;
-            }
-        }
-
-        // Load all modules with error handling
-        try {
-            await loadModule('./config.js');
-            await loadModule('./utils/security.js');
-            await loadModule('./supabase.js');
-            await loadModule('./script.js');
-            console.log('All modules loaded successfully');
-        } catch (error) {
-            console.error('Critical module loading error:', error);
-            // Show error message to user
-            document.body.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-gray-100">
-                    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
-                        <div class="text-center">
-                            <div class="text-red-500 text-6xl mb-4">⚠️</div>
-                            <h1 class="text-2xl font-bold text-gray-800 mb-4">App Loading Error</h1>
-                            <p class="text-gray-600 mb-6">There was an error loading the weather app. Please refresh the page or try again later.</p>
-                            <button onclick="location.reload()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-                                Refresh Page
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-    </script>
+    <script type="module" src="config.example.js"></script>
+    <script type="module" src="utils/security.js"></script>
+    <script type="module" src="supabase.js"></script>
+    <script type="module" src="script.js"></script>
     <!-- Updated: Current build with temperature toggle and profanity mode -->
 </body>
 </html>

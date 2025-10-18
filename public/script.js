@@ -1,16 +1,16 @@
 import { WeatherAppDatabase } from './supabase.js';
-import { config, getConfig } from './config.js';
+import { config, getConfig } from './config.example.js';
 import { safeSetInnerHTML, validateInput, generateSecureId, rateLimiter } from './utils/security.js';
 
 // Fallback configuration in case import fails
 const fallbackConfig = window.FALLBACK_CONFIG || {
-    openWeatherApiKey: '5fcfc173deb068b3716c14a2d27c8ee3',
+    openWeatherApiKey: 'YOUR_OPENWEATHER_API_KEY_HERE',
     supabase: {
         url: 'https://tzhzfiiwecohdkmxvol.supabase.co',
-        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6aHpmaXlpd2Vjb2hka214dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTk3MDgsImV4cCI6MjA3NjI3NTcwOH0.KIgVbyEw8DeaZlKBCZie-8qu9v4Bz9UZDTpwV5UeCek'
+        anonKey: 'YOUR_SUPABASE_ANON_KEY_HERE'
     },
     admin: {
-        password: 'raincheck2024'
+        password: 'YOUR_ADMIN_PASSWORD_HERE'
     },
     isProduction: false
 };
@@ -23,7 +23,7 @@ class WeatherApp {
         this.profanityMode = localStorage.getItem('weatherAppProfanityMode') === 'true';
         this.temperatureUnit = 'celsius'; // Default to celsius
         this.currentTemperatureCelsius = null; // Store the original Celsius value
-        this.openWeatherApiKey = (config || fallbackConfig)?.openWeatherApiKey || '5fcfc173deb068b3716c14a2d27c8ee3'; // Safe access with fallback
+        this.openWeatherApiKey = (config || fallbackConfig)?.openWeatherApiKey || 'YOUR_OPENWEATHER_API_KEY_HERE'; // Safe access with fallback
         this.initializeElements();
         this.bindEvents();
         this.initializeTemperatureUnit();
@@ -48,7 +48,7 @@ class WeatherApp {
             console.error('Failed to load server config, using defaults:', error);
             // Ensure we have a fallback API key
             if (!this.openWeatherApiKey) {
-                this.openWeatherApiKey = '5fcfc173deb068b3716c14a2d27c8ee3';
+                this.openWeatherApiKey = 'YOUR_OPENWEATHER_API_KEY_HERE';
                 console.log('Using fallback API key');
             }
         }
