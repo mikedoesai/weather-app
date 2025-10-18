@@ -1,39 +1,5 @@
 console.log('Script.js loading...');
 
-// Import modules with error handling
-let WeatherAppDatabase, config, getConfig, safeSetInnerHTML, validateInput, generateSecureId, rateLimiter;
-
-try {
-    const supabaseModule = await import('./supabase.js');
-    WeatherAppDatabase = supabaseModule.WeatherAppDatabase;
-    console.log('Supabase module loaded successfully');
-} catch (error) {
-    console.error('Failed to load supabase module:', error);
-}
-
-try {
-    const configModule = await import('./config.js');
-    config = configModule.config;
-    getConfig = configModule.getConfig;
-    console.log('Config module loaded successfully');
-} catch (error) {
-    console.error('Failed to load config module:', error);
-    // Use fallback config if module loading fails
-    config = fallbackConfig;
-    getConfig = () => Promise.resolve(fallbackConfig);
-}
-
-try {
-    const securityModule = await import('./utils/security.js');
-    safeSetInnerHTML = securityModule.safeSetInnerHTML;
-    validateInput = securityModule.validateInput;
-    generateSecureId = securityModule.generateSecureId;
-    rateLimiter = securityModule.rateLimiter;
-    console.log('Security module loaded successfully');
-} catch (error) {
-    console.error('Failed to load security module:', error);
-}
-
 // Fallback configuration in case import fails
 const fallbackConfig = window.FALLBACK_CONFIG || {
     openWeatherApiKey: '5fcfc173deb068b3716c14a2d27c8ee3',
@@ -47,7 +13,71 @@ const fallbackConfig = window.FALLBACK_CONFIG || {
     isProduction: false
 };
 
-console.log('Script.js loaded with config:', config || fallbackConfig);
+// Global variables for modules
+let WeatherAppDatabase, config, getConfig, safeSetInnerHTML, validateInput, generateSecureId, rateLimiter;
+
+// Initialize modules asynchronously
+async function initializeModules() {
+    console.log('Initializing modules...');
+    
+    try {
+        const supabaseModule = await import('./supabase.js');
+        WeatherAppDatabase = supabaseModule.WeatherAppDatabase;
+        console.log('Supabase module loaded successfully');
+    } catch (error) {
+        console.error('Failed to load supabase module:', error);
+    }
+
+    try {
+        const configModule = await import('./config.js');
+        config = configModule.config;
+        getConfig = configModule.getConfig;
+        console.log('Config module loaded successfully');
+    } catch (error) {
+        console.error('Failed to load config module:', error);
+        // Use fallback config if module loading fails
+        config = fallbackConfig;
+        getConfig = () => Promise.resolve(fallbackConfig);
+    }
+
+    try {
+        const securityModule = await import('./utils/security.js');
+        safeSetInnerHTML = securityModule.safeSetInnerHTML;
+        validateInput = securityModule.validateInput;
+        generateSecureId = securityModule.generateSecureId;
+        rateLimiter = securityModule.rateLimiter;
+        console.log('Security module loaded successfully');
+    } catch (error) {
+        console.error('Failed to load security module:', error);
+    }
+    
+    console.log('Script.js loaded with config:', config || fallbackConfig);
+    
+    // Initialize the app after modules are loaded
+    initializeApp();
+}
+
+// Initialize the app
+function initializeApp() {
+    console.log('Initializing WeatherApp...');
+    try {
+        new WeatherApp();
+        console.log('WeatherApp initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize WeatherApp:', error);
+        // Show a fallback error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fixed top-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
+        errorDiv.innerHTML = `
+            <strong>App Error:</strong> Failed to initialize. Please refresh the page or try again later.
+            <button onclick="location.reload()" class="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm">Refresh</button>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+}
+
+// Start module initialization
+initializeModules();
 
 class WeatherApp {
     constructor() {
@@ -1819,23 +1849,12 @@ class WeatherApp {
 
 }
 
-// Initialize the app when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing WeatherApp...');
-    try {
-        new WeatherApp();
-        console.log('WeatherApp initialized successfully');
-    } catch (error) {
-        console.error('Failed to initialize WeatherApp:', error);
-        // Show a fallback error message
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'fixed top-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
-        errorDiv.innerHTML = `
-            <strong>App Error:</strong> Failed to initialize. Please refresh the page or try again later.
-            <button onclick="location.reload()" class="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm">Refresh</button>
-        `;
-        document.body.appendChild(errorDiv);
-    }
-});
+// Wait for DOM to be ready before initializing modules
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeModules);
+} else {
+    // DOM is already ready
+    initializeModules();
+}
 
 // Trigger new deployment - temperature toggle fix applied
