@@ -15,17 +15,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Serve static files with correct MIME types
-app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    }
-    if (path.endsWith('.mjs')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    }
-  }
-}));
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuration endpoint - serves environment variables to frontend
 app.get('/api/config', (req, res) => {
