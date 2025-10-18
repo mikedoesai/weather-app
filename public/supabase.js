@@ -4,7 +4,20 @@ import { config, getConfig } from './config.js'
 // Use Supabase from CDN (loaded in HTML)
 const { createClient } = window.supabase;
 
-export const supabase = createClient(config.supabase.url, config.supabase.anonKey)
+// Create supabase client with default config initially
+let supabase = createClient(config.supabase.url, config.supabase.anonKey);
+
+// Update supabase client when server config loads
+getConfig().then(serverConfig => {
+    if (serverConfig.supabase.url !== config.supabase.url || serverConfig.supabase.anonKey !== config.supabase.anonKey) {
+        console.log('Updating Supabase client with server config');
+        supabase = createClient(serverConfig.supabase.url, serverConfig.supabase.anonKey);
+    }
+}).catch(error => {
+    console.warn('Failed to update Supabase client, using default config:', error);
+});
+
+export { supabase };
 
 // Database functions for the weather app
 export class WeatherAppDatabase {

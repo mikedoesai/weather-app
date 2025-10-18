@@ -20,11 +20,21 @@ class WeatherApp {
 
     async initializeConfig() {
         try {
+            console.log('Initializing config...');
             const serverConfig = await getConfig();
             this.openWeatherApiKey = serverConfig.openWeatherApiKey;
-            console.log('Config initialized:', serverConfig.isProduction ? 'Production' : 'Development');
+            console.log('Config initialized successfully:', {
+                isProduction: serverConfig.isProduction,
+                hasApiKey: !!this.openWeatherApiKey,
+                apiKeyLength: this.openWeatherApiKey ? this.openWeatherApiKey.length : 0
+            });
         } catch (error) {
-            console.warn('Failed to load server config, using defaults:', error);
+            console.error('Failed to load server config, using defaults:', error);
+            // Ensure we have a fallback API key
+            if (!this.openWeatherApiKey) {
+                this.openWeatherApiKey = '5fcfc173deb068b3716c14a2d27c8ee3';
+                console.log('Using fallback API key');
+            }
         }
     }
 
