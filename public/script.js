@@ -1,5 +1,5 @@
 import { WeatherAppDatabase } from './supabase.js';
-import { config } from './config.js';
+import { config, getConfig } from './config.js';
 import { safeSetInnerHTML, validateInput, generateSecureId, rateLimiter } from './utils/security.js';
 
 class WeatherApp {
@@ -15,6 +15,17 @@ class WeatherApp {
         this.initializeProfanityToggle();
         this.hideWeatherWarning(); // Ensure banner is hidden on startup
         this.clearTestSponsoredMessages(); // Clear any test data
+        this.initializeConfig();
+    }
+
+    async initializeConfig() {
+        try {
+            const serverConfig = await getConfig();
+            this.openWeatherApiKey = serverConfig.openWeatherApiKey;
+            console.log('Config initialized:', serverConfig.isProduction ? 'Production' : 'Development');
+        } catch (error) {
+            console.warn('Failed to load server config, using defaults:', error);
+        }
     }
 
     initializeElements() {

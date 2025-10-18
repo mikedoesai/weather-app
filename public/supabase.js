@@ -1,5 +1,5 @@
 // Supabase configuration
-import { config } from './config.js'
+import { config, getConfig } from './config.js'
 
 // Use Supabase from CDN (loaded in HTML)
 const { createClient } = window.supabase;

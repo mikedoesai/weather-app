@@ -1,5 +1,5 @@
 import { WeatherAppDatabase } from './supabase.js';
-import { config } from './config.js';
+import { config, getConfig } from './config.js';
 import { safeSetInnerHTML, validateInput } from './utils/security.js';
 
 class AdminPanel {
@@ -10,7 +10,11 @@ class AdminPanel {
         this.revenueChart = null;
         this.initializeElements();
         this.bindEvents();
-        this.checkAuthentication();
+        this.initializeAsync();
+    }
+
+    async initializeAsync() {
+        await this.checkAuthentication();
     }
 
     initializeElements() {
@@ -55,25 +59,50 @@ class AdminPanel {
         this.previewMessage.addEventListener('click', () => this.previewSponsoredMessage());
     }
 
-    checkAuthentication() {
-        const savedPassword = localStorage.getItem('adminPassword');
-        if (savedPassword === config.admin.password) {
-            this.isAuthenticated = true;
-            this.showDashboard();
-        } else {
-            this.showLogin();
+    async checkAuthentication() {
+        try {
+            const serverConfig = await getConfig();
+            const savedPassword = localStorage.getItem('adminPassword');
+            if (savedPassword === serverConfig.admin.password) {
+                this.isAuthenticated = true;
+                this.showDashboard();
+            } else {
+                this.showLogin();
+            }
+        } catch (error) {
+            console.warn('Failed to load config for authentication, using defaults:', error);
+            const savedPassword = localStorage.getItem('adminPassword');
+            if (savedPassword === config.admin.password) {
+                this.isAuthenticated = true;
+                this.showDashboard();
+            } else {
+                this.showLogin();
+            }
         }
     }
 
-    handleLogin(e) {
+    async handleLogin(e) {
         e.preventDefault();
-        const password = this.adminPassword.value;
-        if (password === config.admin.password) {
-            this.isAuthenticated = true;
-            localStorage.setItem('adminPassword', password);
-            this.showDashboard();
-        } else {
-            alert('Invalid password');
+        try {
+            const serverConfig = await getConfig();
+            const password = this.adminPassword.value;
+            if (password === serverConfig.admin.password) {
+                this.isAuthenticated = true;
+                localStorage.setItem('adminPassword', password);
+                this.showDashboard();
+            } else {
+                alert('Invalid password');
+            }
+        } catch (error) {
+            console.warn('Failed to load config for login, using defaults:', error);
+            const password = this.adminPassword.value;
+            if (password === config.admin.password) {
+                this.isAuthenticated = true;
+                localStorage.setItem('adminPassword', password);
+                this.showDashboard();
+            } else {
+                alert('Invalid password');
+            }
         }
     }
 
