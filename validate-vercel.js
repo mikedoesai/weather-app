@@ -5,13 +5,8 @@
  * Run this script before committing to catch common Vercel deployment issues
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// ES module equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = require('fs');
+const path = require('path');
 
 console.log('🔍 Vercel Configuration Validator\n');
 
@@ -116,9 +111,9 @@ function checkApiStructure() {
       const filePath = path.join('api', file);
       const content = fs.readFileSync(filePath, 'utf8');
       
-      // Check for proper export
-      if (!content.includes('module.exports')) {
-        console.log(`❌ ${file} missing module.exports`);
+      // Check for proper export (CommonJS or ES modules)
+      if (!content.includes('module.exports') && !content.includes('export default')) {
+        console.log(`❌ ${file} missing module.exports or export default`);
         hasErrors = true;
       }
       
