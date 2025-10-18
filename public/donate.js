@@ -42,13 +42,27 @@ class DonationSystem {
             this.durationSelect.addEventListener('change', () => this.updatePrice());
         }
         
-        // Package selection - use event delegation for reliability
+        // Package selection - use both direct and delegated events for reliability
+        const packageOptions = document.querySelectorAll('.package-option');
+        console.log('Found package options:', packageOptions.length);
+        
+        packageOptions.forEach((option, index) => {
+            console.log(`Setting up click handler for package ${index}:`, option);
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Direct click on package:', option);
+                this.selectPackage(option);
+            });
+        });
+        
+        // Also use event delegation as backup
         document.addEventListener('click', (e) => {
             const packageElement = e.target.closest('.package-option');
             if (packageElement) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Package clicked:', packageElement);
+                console.log('Delegated click on package:', packageElement);
                 this.selectPackage(packageElement);
             }
         });
@@ -122,11 +136,13 @@ class DonationSystem {
         // Remove selected class from all packages
         document.querySelectorAll('.package-option').forEach(option => {
             option.classList.remove('selected');
+            console.log('Removed selected class from:', option);
         });
         
         // Add selected class to clicked package
         packageElement.classList.add('selected');
-        console.log('Added selected class to package');
+        console.log('Added selected class to package:', packageElement);
+        console.log('Package classes after selection:', packageElement.className);
         
         // Update form dropdown
         const duration = packageElement.getAttribute('data-duration');
@@ -146,6 +162,13 @@ class DonationSystem {
         
         // Force a re-render to ensure the class is applied
         packageElement.offsetHeight;
+        
+        // Verify the selection was applied
+        setTimeout(() => {
+            const hasSelected = packageElement.classList.contains('selected');
+            console.log('Verification - package has selected class:', hasSelected);
+            console.log('All package classes:', packageElement.className);
+        }, 100);
         
         console.log('Package selection completed');
     }
